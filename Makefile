@@ -1,4 +1,5 @@
 
+TARGETS = 
 
 define tgt_smt2
 ${1} : ${2}
@@ -50,4 +51,21 @@ $(eval $(call tgt_bmc,fml_p_addsub,$(P_ADDSUB_SMT2),$(P_ADDSUB_VCD)))
 $(eval $(call tgt_cover,fml_p_addsub,$(P_ADDSUB_SMT2),$(P_ADDSUB_VCD)))
 $(eval $(call tgt_trace,fml_p_addsub,$(P_ADDSUB_SMT2),$(P_ADDSUB_VCD)))
 
-all: $(P_ADDSUB_SMT2)
+TARGETS += $(P_ADDSUB_SMT2) bmc_fml_p_addsub
+
+
+B_BOP_RTL   = rtl/b_bop/b_bop.v
+B_BOP_VERIF = verif/b_bop/fml_b_bop.v
+B_BOP_SRC   = $(B_BOP_VERIF) $(B_BOP_RTL)
+B_BOP_SMT2  = build/b_bop/fml_b_bop.smt2
+B_BOP_VCD   = build/b_bop/fml_b_bop.vcd
+
+$(eval $(call tgt_smt2,$(B_BOP_SMT2),$(B_BOP_SRC),fml_b_bop))
+$(eval $(call tgt_bmc,fml_b_bop,$(B_BOP_SMT2),$(B_BOP_VCD)))
+$(eval $(call tgt_cover,fml_b_bop,$(B_BOP_SMT2),$(B_BOP_VCD)))
+$(eval $(call tgt_trace,fml_b_bop,$(B_BOP_SMT2),$(B_BOP_VCD)))
+
+TARGETS += $(B_BOP_SMT2) bmc_fml_b_bop
+
+all: $(TARGETS)
+
