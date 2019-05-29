@@ -67,5 +67,18 @@ $(eval $(call tgt_trace,fml_b_bop,$(B_BOP_SMT2),$(B_BOP_VCD)))
 
 TARGETS += $(B_BOP_SMT2) bmc_fml_b_bop
 
+XC_SHA3_RTL   = rtl/xc_sha3/xc_sha3.v
+XC_SHA3_VERIF = verif/xc_sha3/fml_xc_sha3.v
+XC_SHA3_SRC   = $(XC_SHA3_VERIF) $(XC_SHA3_RTL)
+XC_SHA3_SMT2  = build/xc_sha3/fml_xc_sha3.smt2
+XC_SHA3_VCD   = build/xc_sha3/fml_xc_sha3.vcd
+
+$(eval $(call tgt_smt2,$(XC_SHA3_SMT2),$(XC_SHA3_SRC),fml_xc_sha3))
+$(eval $(call tgt_bmc,fml_xc_sha3,$(XC_SHA3_SMT2),$(XC_SHA3_VCD)))
+$(eval $(call tgt_cover,fml_xc_sha3,$(XC_SHA3_SMT2),$(XC_SHA3_VCD)))
+$(eval $(call tgt_trace,fml_xc_sha3,$(XC_SHA3_SMT2),$(XC_SHA3_VCD)))
+
+TARGETS += $(B_BOP_SMT2) bmc_fml_b_bop
+
 all: $(TARGETS)
 
