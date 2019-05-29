@@ -3,6 +3,7 @@
 // module: xc_sha3
 //
 //  Implements the specialised sha3 indexing functions.
+//  - All of the f_* inputs must be 1-hot.
 //
 module xc_sha3 (
 
@@ -21,30 +22,26 @@ output wire [31:0] result     //
 
 );
 
-wire [6:0] in_x         = {2'b00,rs1[4:0]};
-wire [6:0] in_y         = {2'b00,rs2[4:0]};
+wire [4:0] in_x         = rs1[4:0];
+wire [4:0] in_y         = rs2[4:0];
 
-wire [6:0] in_x_plus    = in_x + {f_x4,f_x2,f_x1};
-wire [6:0] in_y_plus    = {in_x, 1'b0} + {{in_y,1'b0} + in_y};
+wire [4:0] in_x_plus    = in_x + {f_x4,f_x2,f_x1};
+wire [6:0] in_y_plus    = {in_x, 1'b0} + {{2'b00,in_y,1'b0} + in_y};
 
-wire [6:0] lut_in_lhs   = f_yx ? in_y       : in_x_plus ;
-wire [7:0] lut_in_rhs   = f_yx ? in_y_plus  : in_y      ;
+wire [4:0] lut_in_lhs   = f_yx ? in_y       : in_x_plus ;
+wire [6:0] lut_in_rhs   = f_yx ? in_y_plus  : in_y      ;
 
+wire [2:0] lut_out_lhs  = lut_in_lhs % 5;
+wire [2:0] lut_out_rhs  = lut_in_rhs % 5;
 
-wire [6:0] lut_out_lhs  = lut_in_lhs % 5;
-wire [6:0] lut_out_rhs  = lut_in_rhs % 5;
+wire [4:0] sum_rhs      = {lut_out_rhs,2'b00} + lut_out_rhs;
 
-wire [6:0] sum_rhs      = {lut_out_rhs,2'b00} + lut_out_rhs;
+wire [4:0] result_sum   = lut_out_lhs + sum_rhs;
 
-wire [6:0] result_sum   = lut_out_lhs + sum_rhs;
+wire [5:0] shf_1        = shamt[0] ? {result_sum,1'b0} : {1'b0, result_sum};
+wire [7:0] shf_2        = shamt[1] ? {shf_1,2'b0     } : {2'b0, shf_1     };
 
-wire [9:0] result_shf   =
-    {10{shamt == 2'b00}} & {3'b000, result_sum        } |
-    {10{shamt == 2'b01}} & {2'b00 , result_sum, 1'b0  } |
-    {10{shamt == 2'b10}} & {1'b0  , result_sum, 2'b00 } |
-    {10{shamt == 2'b11}} & {        result_sum, 3'b000} ;
-
-assign result = result_shf;
+assign result           = shf_2;
 
 
 endmodule
