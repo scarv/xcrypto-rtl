@@ -4,7 +4,7 @@ TARGETS =
 define tgt_smt2
 ${1} : ${2}
 	@mkdir -p $(dir ${1})
-	yosys -QT \
+	yosys -qQT \
         -p "read_verilog -formal ${2}" \
         -p "prep -top ${3}" \
         -p "write_smt2 -wires ${1}" 
@@ -13,7 +13,7 @@ endef
 define tgt_synth
 ${1} : ${2}
 	@mkdir -p $(dir ${1})
-	yosys -QT \
+	yosys -qQT \
         -p "read_verilog -formal ${2}" \
         -p "synth -top ${3}" \
         -p "tee -o ${1}.rpt stat" \
