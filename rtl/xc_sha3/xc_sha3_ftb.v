@@ -1,10 +1,10 @@
 
 //
-// module: fml_sha3
+// module: xc_sha3_ftb
 //
 //  Formal checker for the correctness of the packed add/subtract module.
 //
-module fml_xc_sha3 (
+module xc_sha3_ftb (
 
 input clock,
 input reset

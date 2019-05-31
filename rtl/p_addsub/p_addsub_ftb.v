@@ -1,10 +1,10 @@
 
 //
-// module: fml_p_addsub
+// module: p_addsub_ftb
 //
 //  Formal checker for the correctness of the packed add/subtract module.
 //
-module fml_p_addsub (
+module p_addsub_ftb (
 
 input clock,
 input reset

@@ -1,10 +1,10 @@
 
 //
-// module: fml_b_bop
+// module: b_bop_ftb
 //
 //  Formal checker for the correctness of the bitwise bop module.
 //
-module fml_b_bop(
+module b_bop_ftb(
 
 input clock,
 input reset
