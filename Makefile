@@ -19,7 +19,10 @@ ${1} : ${2}
 	@mkdir -p $(dir ${1})
 	$(YOSYS) -qQT \
         -p "read_verilog -formal ${2}" \
+        -p "read_verilog -lib $(YOSYS_ROOT)/examples/cmos/cmos_cells.v" \
         -p "synth -top ${3}" \
+        -p "dfflibmap -liberty $(YOSYS_ROOT)/techlibs/common/cells.lib" \
+        -p "abc -liberty $(YOSYS_ROOT)/examples/cmos/cmos_cells.lib" \
         -p "tee -o ${1}.rpt stat" \
         -p "write_verilog ${1}" 
 synth_${3} : ${1}
@@ -73,6 +76,8 @@ $(eval $(call tgt_bmc,${3}_ftb,build/${3}/${3}.smt2,build/${3}/${3}.vcd))
 $(eval $(call tgt_cover,${3}_ftb,build/${3}/${3}.smt2,build/${3}/${3}.vcd))
 $(eval $(call tgt_trace,${3}_ftb,build/${3}/${3}.smt2,build/${3}/${3}.vcd))
 
+${3} : build/${3}/${3}.smt2 build/${3}/${3}.v build/${3}/${3}.vcd bmc_${3}_ftb
+
 endef
 
 P_ADDSUB_RTL   = rtl/p_addsub/p_addsub.v
@@ -84,6 +89,11 @@ B_BOP_RTL   = rtl/b_bop/b_bop.v
 B_BOP_VERIF = rtl/b_bop/b_bop_ftb.v
 
 $(eval $(call add_targets,$(B_BOP_RTL),$(B_BOP_VERIF),b_bop))
+
+B_LUT_RTL   = rtl/b_lut/b_lut.v
+B_LUT_VERIF = rtl/b_lut/b_lut_ftb.v
+
+$(eval $(call add_targets,$(B_LUT_RTL),$(B_LUT_VERIF),b_lut))
 
 XC_SHA3_RTL   = rtl/xc_sha3/xc_sha3.v
 XC_SHA3_VERIF = rtl/xc_sha3/xc_sha3_ftb.v
