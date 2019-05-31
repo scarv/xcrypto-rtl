@@ -59,44 +59,37 @@ trs_${1} : ${2}
 ALL_TARGETS += trs_${1}
 endef
 
+
+#
+# Add a set of targets for a particular instruction
+# 1 - RTL Source files
+# 2 - Verification source files
+# 3 - RTL top module name
+define add_targets
+
+$(eval $(call tgt_smt2,build/${3}/${3}.smt2,$1 $2,${3}_ftb))
+$(eval $(call tgt_synth,build/${3}/${3}.v,$1 ,$3))
+$(eval $(call tgt_bmc,${3}_ftb,build/${3}/${3}.smt2,build/${3}/${3}.vcd))
+$(eval $(call tgt_cover,${3}_ftb,build/${3}/${3}.smt2,build/${3}/${3}.vcd))
+$(eval $(call tgt_trace,${3}_ftb,build/${3}/${3}.smt2,build/${3}/${3}.vcd))
+
+endef
+
 P_ADDSUB_RTL   = rtl/p_addsub/p_addsub.v
 P_ADDSUB_VERIF = rtl/p_addsub/p_addsub_ftb.v
-P_ADDSUB_SRC   = $(P_ADDSUB_VERIF) $(P_ADDSUB_RTL)
-P_ADDSUB_SMT2  = build/p_addsub/p_addsub.smt2
-P_ADDSUB_SYNTH = build/p_addsub/p_addsub.v
-P_ADDSUB_VCD   = build/p_addsub/p_addsub.vcd
 
-$(eval $(call tgt_smt2,$(P_ADDSUB_SMT2),$(P_ADDSUB_SRC),p_addsub_ftb))
-$(eval $(call tgt_synth,$(P_ADDSUB_SYNTH),$(P_ADDSUB_SRC),p_addsub))
-$(eval $(call tgt_bmc,p_addsub_ftb,$(P_ADDSUB_SMT2),$(P_ADDSUB_VCD)))
-$(eval $(call tgt_cover,p_addsub_ftb,$(P_ADDSUB_SMT2),$(P_ADDSUB_VCD)))
-$(eval $(call tgt_trace,p_addsub_ftb,$(P_ADDSUB_SMT2),$(P_ADDSUB_VCD)))
+$(eval $(call add_targets,$(P_ADDSUB_RTL),$(P_ADDSUB_VERIF),p_addsub))
 
 B_BOP_RTL   = rtl/b_bop/b_bop.v
 B_BOP_VERIF = rtl/b_bop/b_bop_ftb.v
-B_BOP_SRC   = $(B_BOP_VERIF) $(B_BOP_RTL)
-B_BOP_SMT2  = build/b_bop/b_bop.smt2
-B_BOP_SYNTH = build/b_bop/b_bop.v
-B_BOP_VCD   = build/b_bop/b_bop.vcd
 
-$(eval $(call tgt_smt2,$(B_BOP_SMT2),$(B_BOP_SRC),b_bop_ftb))
-$(eval $(call tgt_synth,$(B_BOP_SYNTH),$(B_BOP_SRC),b_bop))
-$(eval $(call tgt_bmc,b_bop_ftb,$(B_BOP_SMT2),$(B_BOP_VCD)))
-$(eval $(call tgt_cover,b_bop_ftb,$(B_BOP_SMT2),$(B_BOP_VCD)))
-$(eval $(call tgt_trace,b_bop_ftb,$(B_BOP_SMT2),$(B_BOP_VCD)))
+$(eval $(call add_targets,$(B_BOP_RTL),$(B_BOP_VERIF),b_bop))
 
 XC_SHA3_RTL   = rtl/xc_sha3/xc_sha3.v
 XC_SHA3_VERIF = rtl/xc_sha3/xc_sha3_ftb.v
-XC_SHA3_SRC   = $(XC_SHA3_VERIF) $(XC_SHA3_RTL)
-XC_SHA3_SMT2  = build/xc_sha3/xc_sha3.smt2
-XC_SHA3_SYNTH = build/xc_sha3/xc_sha3.v
-XC_SHA3_VCD   = build/xc_sha3/xc_sha3.vcd
 
-$(eval $(call tgt_smt2,$(XC_SHA3_SMT2),$(XC_SHA3_SRC),xc_sha3_ftb))
-$(eval $(call tgt_synth,$(XC_SHA3_SYNTH),$(XC_SHA3_SRC),xc_sha3))
-$(eval $(call tgt_bmc,xc_sha3_ftb,$(XC_SHA3_SMT2),$(XC_SHA3_VCD)))
-$(eval $(call tgt_cover,xc_sha3_ftb,$(XC_SHA3_SMT2),$(XC_SHA3_VCD)))
-$(eval $(call tgt_trace,xc_sha3_ftb,$(XC_SHA3_SMT2),$(XC_SHA3_VCD)))
+$(eval $(call add_targets,$(XC_SHA3_RTL),$(XC_SHA3_VERIF),xc_sha3))
+
 
 all: $(ALL_TARGETS)
 
