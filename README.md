@@ -25,7 +25,7 @@ implementing the XCrypto ISE.*
     ```
     $> make synth-all
     ```
-  The results will appear in `build/<module name>/
+  The results will appear in `build/<module name>/`
 
 
 - Run BMC proofs of correctness on the modules:
@@ -49,7 +49,7 @@ Module Name     | Instructions Implemented  | Yosys CMOS Gate Count
 `b_lut`         | `xc.lut`                  | 1280
 `p_addsub`      | `xc.padd`,`xc.psub`       | 617
 `p_shfrot`      | `xc.psrl[.i]`,`xc.psll[.i]`,`xc.prot[.i]` | 1244
-`xc_sha3`       | `xc.sha3.[xy|x1|x2|x4|yx]` | 446
+`xc_sha3`       | `xc.sha3.[xy,x1,x2,x4,yx]` | 446
 
 ---
 
