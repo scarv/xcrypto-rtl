@@ -196,8 +196,7 @@ wire ld_l2_r_8  =right && w_8  && shamt[1];
 wire ld_l2_l_4  =left  && w_4  && shamt[1];
 wire ld_l2_r_4  =right && w_4  && shamt[1];
 
-wire ld_l2_l_2  =left  && w_2  && shamt[1];
-wire ld_l2_r_2  =right && w_2  && shamt[1];
+wire ld_l2_2    =         w_2  && shamt[1];
 
 wire ld_l2_n_n  =                !shamt[1];
 
@@ -210,8 +209,7 @@ assign l2 =
     {32{ld_l2_r_8 }} & l2_8_right    |
     {32{ld_l2_l_4 }} & l2_4_left     |
     {32{ld_l2_r_4 }} & l2_4_right    |
-    {32{ld_l2_l_2 }} & l2_2          |
-    {32{ld_l2_r_2 }} & l2_2          |
+    {32{ld_l2_2   }} & l2_2          |
     {32{ld_l2_n_n }} & l1            ;
 
 //
