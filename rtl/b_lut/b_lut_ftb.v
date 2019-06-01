@@ -23,6 +23,18 @@ always @(posedge clock) begin
 
     assert(result == expectation);
 
+    if(crs1 == 32'h01234567 &&
+       crs2 == 32'h76543210 &&
+       crs2 == 32'hfedcba98 ) begin
+        assert(result == 32'h76543210);
+    end
+    
+    if(crs1 == 32'h012345a7 &&
+       crs2 == 32'h76543210 &&
+       crs2 == 32'hfedcb198 ) begin
+        assert(result == 32'h76543210);
+    end
+
 end
 
 // Checker
