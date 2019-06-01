@@ -76,7 +76,7 @@ $(eval $(call tgt_bmc,${3}_ftb,build/${3}/${3}.smt2,build/${3}/${3}.vcd))
 $(eval $(call tgt_cover,${3}_ftb,build/${3}/${3}.smt2,build/${3}/${3}.vcd))
 $(eval $(call tgt_trace,${3}_ftb,build/${3}/${3}.smt2,build/${3}/${3}.vcd))
 
-${3} : build/${3}/${3}.smt2 build/${3}/${3}.v build/${3}/${3}.vcd bmc_${3}_ftb
+${3} : build/${3}/${3}.smt2 build/${3}/${3}.v bmc_${3}_ftb
 
 endef
 
@@ -84,6 +84,11 @@ P_ADDSUB_RTL   = rtl/p_addsub/p_addsub.v
 P_ADDSUB_VERIF = rtl/p_addsub/p_addsub_ftb.v
 
 $(eval $(call add_targets,$(P_ADDSUB_RTL),$(P_ADDSUB_VERIF),p_addsub))
+
+P_SHFROT_RTL   = rtl/p_shfrot/p_shfrot.v
+P_SHFROT_VERIF = rtl/p_shfrot/p_shfrot_ftb.v
+
+$(eval $(call add_targets,$(P_SHFROT_RTL),$(P_SHFROT_VERIF),p_shfrot))
 
 B_BOP_RTL   = rtl/b_bop/b_bop.v
 B_BOP_VERIF = rtl/b_bop/b_bop_ftb.v
