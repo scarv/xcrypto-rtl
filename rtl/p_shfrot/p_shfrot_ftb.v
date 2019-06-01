@@ -39,8 +39,6 @@ always @(posedge clock) begin
     restrict(shift ^ rotate);
     restrict(left  ^ right );
 
-    restrict(shamt<=15);
-
     if(w_32) begin
         assert(result == expectation);
     end
@@ -139,12 +137,12 @@ wire [15:0] w_16_sr_0 = crs1[15: 0] >> shamt;
 wire [15:0] w_16_sr_1 = crs1[31:16] >> shamt;
 wire [31:0] w_16_sr   = {w_16_sr_1, w_16_sr_0};
 
-wire [31:0] w_16_rl_0 = ({crs1[15: 0],crs1[15: 0]} << shamt) >> 16;
-wire [31:0] w_16_rl_1 = ({crs1[31:16],crs1[31:16]} << shamt) >> 16;
+wire [31:0] w_16_rl_0 = ({crs1[15: 0],crs1[15: 0]} >> (16-shamt[3:0]));
+wire [31:0] w_16_rl_1 = ({crs1[31:16],crs1[31:16]} >> (16-shamt[3:0]));
 wire [31:0] w_16_rl   = {w_16_rl_1[15:0], w_16_rl_0[15:0]};
 
-wire [31:0] w_16_rr_0 = {crs1[15: 0],crs1[15: 0]} >> (   shamt);
-wire [31:0] w_16_rr_1 = {crs1[31:16],crs1[31:16]} >> (   shamt);
+wire [31:0] w_16_rr_0 = {crs1[15: 0],crs1[15: 0]} >> (   shamt[3:0]);
+wire [31:0] w_16_rr_1 = {crs1[31:16],crs1[31:16]} >> (   shamt[3:0]);
 wire [31:0] w_16_rr   = {w_16_rr_1[15:0], w_16_rr_0[15:0]};
 
 // 8-bit elements

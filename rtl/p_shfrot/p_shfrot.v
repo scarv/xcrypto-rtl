@@ -320,7 +320,47 @@ assign l8 =
 
 //
 // Level 5 code.
-assign l16 = l8 ;  
+wire [31:0] l16_32_left  = {l8[15:0], {16{rotate}} & l8[31:16]};
+
+wire [31:0] l16_32_right = {{16{rotate}} & l8[15:0], l8[31:8]};
+
+wire [31:0] l16_16       = rotate ? l8 : 32'b0;
+
+wire [31:0] l16_8        = rotate ? l8 : 32'b0;
+
+wire [31:0] l16_4        = rotate ? l8 : 32'b0;
+
+wire [31:0] l16_2        = rotate ? l8 : 32'b0;
+    
+wire ld_l16_l_32 =left  && w_32 && shamt[4];
+wire ld_l16_r_32 =right && w_32 && shamt[4];
+
+wire ld_l16_l_16 =left  && w_16 && shamt[4];
+wire ld_l16_r_16 =right && w_16 && shamt[4];
+
+wire ld_l16_l_8  =left  && w_8  && shamt[4];
+wire ld_l16_r_8  =right && w_8  && shamt[4];
+
+wire ld_l16_l_4  =left  && w_4  && shamt[4];
+wire ld_l16_r_4  =right && w_4  && shamt[4];
+
+wire ld_l16_l_2  =left  && w_2  && shamt[4];
+wire ld_l16_r_2  =right && w_2  && shamt[4];
+
+wire ld_l16_n_n  =                !shamt[4];
+
+assign l16 =
+    {32{ld_l16_l_32}} & l16_32_left    |
+    {32{ld_l16_r_32}} & l16_32_right   |
+    {32{ld_l16_l_16}} & l16_16         |
+    {32{ld_l16_r_16}} & l16_16         |
+    {32{ld_l16_l_8 }} & l16_8          |
+    {32{ld_l16_r_8 }} & l16_8          |
+    {32{ld_l16_l_4 }} & l16_4          |
+    {32{ld_l16_r_4 }} & l16_4          |
+    {32{ld_l16_l_2 }} & l16_2          |
+    {32{ld_l16_r_2 }} & l16_2          |
+    {32{ld_l16_n_n }} & l8             ;
 
 // Finish.
 assign result = l16;
