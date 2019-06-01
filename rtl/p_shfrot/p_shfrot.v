@@ -16,7 +16,7 @@ input         rotate, // Rotate left/right
 input         left  , // Shift/roate left
 input         right , // Shift/rotate right
 
-output reg [31:0] result  // Operation result
+output [31:0] result  // Operation result
 
 );
 
@@ -322,7 +322,7 @@ assign l8 =
 // Level 5 code.
 wire [31:0] l16_32_left  = {l8[15:0], {16{rotate}} & l8[31:16]};
 
-wire [31:0] l16_32_right = {{16{rotate}} & l8[15:0], l8[31:8]};
+wire [31:0] l16_32_right = {{16{rotate}} & l8[15: 0], l8[31:16]};
 
 wire [31:0] l16_16       = rotate ? l8 : 32'b0;
 

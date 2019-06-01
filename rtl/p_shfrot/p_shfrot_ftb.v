@@ -36,6 +36,8 @@ always @(posedge clock) begin
 
     restrict(one_hot_w <= 1);
 
+    restrict(crs1 == 32'b1);
+
     restrict(shift ^ rotate);
     restrict(left  ^ right );
 
