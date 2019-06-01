@@ -24,7 +24,6 @@ reg         right       = $anyseq; // Shift/rotate right
 wire [31:0] result      ; // DUT Operation result
 wire [31:0] expectation ; // Expected Operation result
 
-
 wire w_32 = pw[0];
 wire w_16 = pw[1];
 wire w_8  = pw[2];
@@ -36,6 +35,11 @@ wire [4:0] one_hot_w = w_32 + w_16 + w_8 + w_4 + w_2;
 always @(posedge clock) begin
 
     restrict(one_hot_w <= 1);
+
+    restrict(shift ^ rotate);
+    restrict(left  ^ right );
+
+    restrict(shamt<=3);
 
     if(w_32) begin
         assert(result == expectation);
@@ -135,8 +139,8 @@ wire [15:0] w_16_sr_0 = crs1[15: 0] >> shamt;
 wire [15:0] w_16_sr_1 = crs1[31:16] >> shamt;
 wire [31:0] w_16_sr   = {w_16_sr_1, w_16_sr_0};
 
-wire [31:0] w_16_rl_0 = {crs1[15: 0],crs1[15: 0]} >> (32-shamt);
-wire [31:0] w_16_rl_1 = {crs1[31:16],crs1[31:16]} >> (32-shamt);
+wire [31:0] w_16_rl_0 = ({crs1[15: 0],crs1[15: 0]} << shamt) >> 16;
+wire [31:0] w_16_rl_1 = ({crs1[31:16],crs1[31:16]} << shamt) >> 16;
 wire [31:0] w_16_rl   = {w_16_rl_1[15:0], w_16_rl_0[15:0]};
 
 wire [31:0] w_16_rr_0 = {crs1[15: 0],crs1[15: 0]} >> (   shamt);
@@ -144,22 +148,22 @@ wire [31:0] w_16_rr_1 = {crs1[31:16],crs1[31:16]} >> (   shamt);
 wire [31:0] w_16_rr   = {w_16_rr_1[15:0], w_16_rr_0[15:0]};
 
 // 8-bit elements
-wire [15:0] w_8_sl_0  = crs1[ 7: 0] << shamt;
-wire [15:0] w_8_sl_1  = crs1[15: 8] << shamt;
-wire [15:0] w_8_sl_2  = crs1[23:16] << shamt;
-wire [15:0] w_8_sl_3  = crs1[31:24] << shamt;
+wire [ 7:0] w_8_sl_0  = crs1[ 7: 0] << shamt;
+wire [ 7:0] w_8_sl_1  = crs1[15: 8] << shamt;
+wire [ 7:0] w_8_sl_2  = crs1[23:16] << shamt;
+wire [ 7:0] w_8_sl_3  = crs1[31:24] << shamt;
 wire [31:0] w_8_sl    = {w_8_sl_3,w_8_sl_2,w_8_sl_1, w_8_sl_0};
 
-wire [15:0] w_8_sr_0  = crs1[ 7: 0] >> shamt;
-wire [15:0] w_8_sr_1  = crs1[15: 8] >> shamt;
-wire [15:0] w_8_sr_2  = crs1[23:16] >> shamt;
-wire [15:0] w_8_sr_3  = crs1[31:24] >> shamt;
+wire [ 7:0] w_8_sr_0  = crs1[ 7: 0] >> shamt;
+wire [ 7:0] w_8_sr_1  = crs1[15: 8] >> shamt;
+wire [ 7:0] w_8_sr_2  = crs1[23:16] >> shamt;
+wire [ 7:0] w_8_sr_3  = crs1[31:24] >> shamt;
 wire [31:0] w_8_sr    = {w_8_sr_3,w_8_sr_2,w_8_sr_1, w_8_sr_0};
 
-wire [15:0] w_8_rl_0  = {crs1[ 7: 0],crs1[ 7: 0]} >> (32-shamt);
-wire [15:0] w_8_rl_1  = {crs1[15: 8],crs1[15: 8]} >> (32-shamt);
-wire [15:0] w_8_rl_2  = {crs1[23:16],crs1[23:16]} >> (32-shamt);
-wire [15:0] w_8_rl_3  = {crs1[31:24],crs1[31:24]} >> (32-shamt);
+wire [15:0] w_8_rl_0  = ({crs1[ 7: 0],crs1[ 7: 0]} << shamt) >> 8;
+wire [15:0] w_8_rl_1  = ({crs1[15: 8],crs1[15: 8]} << shamt) >> 8;
+wire [15:0] w_8_rl_2  = ({crs1[23:16],crs1[23:16]} << shamt) >> 8;
+wire [15:0] w_8_rl_3  = ({crs1[31:24],crs1[31:24]} << shamt) >> 8;
 wire [31:0] w_8_rl    = {w_8_rl_3[ 7:0], w_8_rl_2[ 7:0],
                          w_8_rl_1[ 7:0], w_8_rl_0[ 7:0]};
 
@@ -193,14 +197,14 @@ wire [ 3:0] w_4_sr_7  = crs1[31:28] >> shamt;
 wire [31:0] w_4_sr    = {w_4_sr_7,w_4_sr_6,w_4_sr_5, w_4_sr_4,
                          w_4_sr_3,w_4_sr_2,w_4_sr_1, w_4_sr_0};
 
-wire [15:0] w_4_rl_0  = {crs1[ 3: 0],crs1[ 3: 0]} >> (32-shamt);
-wire [15:0] w_4_rl_1  = {crs1[ 7: 4],crs1[ 7: 4]} >> (32-shamt);
-wire [15:0] w_4_rl_2  = {crs1[11: 8],crs1[11: 8]} >> (32-shamt);
-wire [15:0] w_4_rl_3  = {crs1[15:12],crs1[15:12]} >> (32-shamt);
-wire [15:0] w_4_rl_4  = {crs1[19:16],crs1[19:16]} >> (32-shamt);
-wire [15:0] w_4_rl_5  = {crs1[23:20],crs1[23:20]} >> (32-shamt);
-wire [15:0] w_4_rl_6  = {crs1[27:24],crs1[27:24]} >> (32-shamt);
-wire [15:0] w_4_rl_7  = {crs1[31:28],crs1[31:28]} >> (32-shamt);
+wire [15:0] w_4_rl_0  = ({crs1[ 3: 0],crs1[ 3: 0]} << shamt) >> 4;
+wire [15:0] w_4_rl_1  = ({crs1[ 7: 4],crs1[ 7: 4]} << shamt) >> 4;
+wire [15:0] w_4_rl_2  = ({crs1[11: 8],crs1[11: 8]} << shamt) >> 4;
+wire [15:0] w_4_rl_3  = ({crs1[15:12],crs1[15:12]} << shamt) >> 4;
+wire [15:0] w_4_rl_4  = ({crs1[19:16],crs1[19:16]} << shamt) >> 4;
+wire [15:0] w_4_rl_5  = ({crs1[23:20],crs1[23:20]} << shamt) >> 4;
+wire [15:0] w_4_rl_6  = ({crs1[27:24],crs1[27:24]} << shamt) >> 4;
+wire [15:0] w_4_rl_7  = ({crs1[31:28],crs1[31:28]} << shamt) >> 4;
 wire [31:0] w_4_rl    = {w_4_rl_7[ 3:0], w_4_rl_6[ 3:0],
                          w_4_rl_5[ 3:0], w_4_rl_4[ 3:0],
                          w_4_rl_3[ 3:0], w_4_rl_2[ 3:0],
@@ -262,43 +266,43 @@ wire [31:0] w_2_sr    = {w_2_sr_15,w_2_sr_14,w_2_sr_13, w_2_sr_12,
                          w_2_sr_7 ,w_2_sr_6 ,w_2_sr_5 , w_2_sr_4 ,
                          w_2_sr_3 ,w_2_sr_2 ,w_2_sr_1 , w_2_sr_0 };
 
-wire [ 3:0] w_2_rl_0  = {crs1[ 1: 0],crs1[ 1: 0]} >> {32-shamt};
-wire [ 3:0] w_2_rl_1  = {crs1[ 3: 2],crs1[ 3: 2]} >> {32-shamt};
-wire [ 3:0] w_2_rl_2  = {crs1[ 5: 4],crs1[ 5: 4]} >> {32-shamt};
-wire [ 3:0] w_2_rl_3  = {crs1[ 7: 6],crs1[ 7: 6]} >> {32-shamt};
-wire [ 3:0] w_2_rl_4  = {crs1[ 9: 8],crs1[ 9: 8]} >> {32-shamt};
-wire [ 3:0] w_2_rl_5  = {crs1[11:10],crs1[11:10]} >> {32-shamt};
-wire [ 3:0] w_2_rl_6  = {crs1[13:12],crs1[13:12]} >> {32-shamt};
-wire [ 3:0] w_2_rl_7  = {crs1[15:14],crs1[15:14]} >> {32-shamt};
-wire [ 3:0] w_2_rl_8  = {crs1[17:16],crs1[17:16]} >> {32-shamt};
-wire [ 3:0] w_2_rl_9  = {crs1[19:18],crs1[19:18]} >> {32-shamt};
-wire [ 3:0] w_2_rl_10 = {crs1[21:20],crs1[21:20]} >> {32-shamt};
-wire [ 3:0] w_2_rl_11 = {crs1[23:22],crs1[23:22]} >> {32-shamt};
-wire [ 3:0] w_2_rl_12 = {crs1[25:24],crs1[25:24]} >> {32-shamt};
-wire [ 3:0] w_2_rl_13 = {crs1[27:26],crs1[27:26]} >> {32-shamt};
-wire [ 3:0] w_2_rl_14 = {crs1[29:28],crs1[29:28]} >> {32-shamt};
-wire [ 3:0] w_2_rl_15 = {crs1[31:30],crs1[31:30]} >> {32-shamt};
+wire [ 1:0] w_2_rl_0  = ({crs1[ 1: 0],crs1[ 1: 0]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_1  = ({crs1[ 3: 2],crs1[ 3: 2]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_2  = ({crs1[ 5: 4],crs1[ 5: 4]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_3  = ({crs1[ 7: 6],crs1[ 7: 6]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_4  = ({crs1[ 9: 8],crs1[ 9: 8]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_5  = ({crs1[11:10],crs1[11:10]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_6  = ({crs1[13:12],crs1[13:12]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_7  = ({crs1[15:14],crs1[15:14]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_8  = ({crs1[17:16],crs1[17:16]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_9  = ({crs1[19:18],crs1[19:18]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_10 = ({crs1[21:20],crs1[21:20]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_11 = ({crs1[23:22],crs1[23:22]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_12 = ({crs1[25:24],crs1[25:24]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_13 = ({crs1[27:26],crs1[27:26]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_14 = ({crs1[29:28],crs1[29:28]} << {2-shamt&5'b00001}) >> 2;
+wire [ 1:0] w_2_rl_15 = ({crs1[31:30],crs1[31:30]} << {2-shamt&5'b00001}) >> 2;
 wire [31:0] w_2_rl    = {w_2_rl_15,w_2_rl_14,w_2_rl_13, w_2_rl_12,
                          w_2_rl_11,w_2_rl_10,w_2_rl_9 , w_2_rl_8 ,
                          w_2_rl_7 ,w_2_rl_6 ,w_2_rl_5 , w_2_rl_4 ,
                          w_2_rl_3 ,w_2_rl_2 ,w_2_rl_1 , w_2_rl_0 };
 
-wire [ 3:0] w_2_rr_0  = {crs1[ 1: 0],crs1[ 1: 0]} >> {   shamt};
-wire [ 3:0] w_2_rr_1  = {crs1[ 3: 2],crs1[ 3: 2]} >> {   shamt};
-wire [ 3:0] w_2_rr_2  = {crs1[ 5: 4],crs1[ 5: 4]} >> {   shamt};
-wire [ 3:0] w_2_rr_3  = {crs1[ 7: 6],crs1[ 7: 6]} >> {   shamt};
-wire [ 3:0] w_2_rr_4  = {crs1[ 9: 8],crs1[ 9: 8]} >> {   shamt};
-wire [ 3:0] w_2_rr_5  = {crs1[11:10],crs1[11:10]} >> {   shamt};
-wire [ 3:0] w_2_rr_6  = {crs1[13:12],crs1[13:12]} >> {   shamt};
-wire [ 3:0] w_2_rr_7  = {crs1[15:14],crs1[15:14]} >> {   shamt};
-wire [ 3:0] w_2_rr_8  = {crs1[17:16],crs1[17:16]} >> {   shamt};
-wire [ 3:0] w_2_rr_9  = {crs1[19:18],crs1[19:18]} >> {   shamt};
-wire [ 3:0] w_2_rr_10 = {crs1[21:20],crs1[21:20]} >> {   shamt};
-wire [ 3:0] w_2_rr_11 = {crs1[23:22],crs1[23:22]} >> {   shamt};
-wire [ 3:0] w_2_rr_12 = {crs1[25:24],crs1[25:24]} >> {   shamt};
-wire [ 3:0] w_2_rr_13 = {crs1[27:26],crs1[27:26]} >> {   shamt};
-wire [ 3:0] w_2_rr_14 = {crs1[29:28],crs1[29:28]} >> {   shamt};
-wire [ 3:0] w_2_rr_15 = {crs1[31:30],crs1[31:30]} >> {   shamt};
+wire [ 1:0] w_2_rr_0  = ({crs1[ 1: 0],crs1[ 1: 0]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_1  = ({crs1[ 3: 2],crs1[ 3: 2]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_2  = ({crs1[ 5: 4],crs1[ 5: 4]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_3  = ({crs1[ 7: 6],crs1[ 7: 6]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_4  = ({crs1[ 9: 8],crs1[ 9: 8]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_5  = ({crs1[11:10],crs1[11:10]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_6  = ({crs1[13:12],crs1[13:12]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_7  = ({crs1[15:14],crs1[15:14]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_8  = ({crs1[17:16],crs1[17:16]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_9  = ({crs1[19:18],crs1[19:18]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_10 = ({crs1[21:20],crs1[21:20]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_11 = ({crs1[23:22],crs1[23:22]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_12 = ({crs1[25:24],crs1[25:24]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_13 = ({crs1[27:26],crs1[27:26]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_14 = ({crs1[29:28],crs1[29:28]} >> {   shamt&5'b00001});
+wire [ 1:0] w_2_rr_15 = ({crs1[31:30],crs1[31:30]} >> {   shamt&5'b00001});
 wire [31:0] w_2_rr    = {w_2_rr_15,w_2_rr_14,w_2_rr_13, w_2_rr_12,
                          w_2_rr_11,w_2_rr_10,w_2_rr_9 , w_2_rr_8 ,
                          w_2_rr_7 ,w_2_rr_6 ,w_2_rr_5 , w_2_rr_4 ,
