@@ -247,8 +247,108 @@ assign l2 =
     {32{ld_l2_n_n }} & l1            ;
 
 //
-// Level 3 code.
-assign l4  = l2 ;  
+// Level 3 code - shift/rotate by 4
+wire [31:0] l4_32_left  = {l2[27:0], {4{rotate}} & l2[31:28]};
+
+wire [31:0] l4_32_right = {{4{rotate}} & l2[3:0], l2[31:4]};
+
+wire [31:0] l4_16_left  = {l2[27:16], {4{rotate}} & l2[31:28],
+                           l2[11: 0], {4{rotate}} & l2[15:12]};
+
+wire [31:0] l4_16_right = {{4{rotate}} & l2[19:16], l2[31:20],
+                           {4{rotate}} & l2[ 3: 0], l2[15: 4]};
+
+wire [31:0] l4_8_left   = {l2[27:24], {4{rotate}} & l2[31:28],
+                           l2[19:16], {4{rotate}} & l2[23:20],
+                           l2[11: 8], {4{rotate}} & l2[15:12],
+                           l2[ 3: 0], {4{rotate}} & l2[ 7: 4]};
+
+wire [31:0] l4_8_right  = {{4{rotate}} & l2[27:24], l2[31:28],
+                           {4{rotate}} & l2[19:16], l2[23:20],
+                           {4{rotate}} & l2[11: 8], l2[15:12],
+                           {4{rotate}} & l2[ 3: 0], l2[ 7: 4]};
+
+wire [31:0] l4_4_left   = {{4{rotate}} & l2[31:28],
+                           {4{rotate}} & l2[27:24],
+                           {4{rotate}} & l2[23:20],
+                           {4{rotate}} & l2[19:16],
+                           {4{rotate}} & l2[15:12],
+                           {4{rotate}} & l2[11: 8],
+                           {4{rotate}} & l2[ 7: 4],
+                           {4{rotate}} & l2[ 3: 0]};
+
+wire [31:0] l4_4_right  = {{4{rotate}} & l2[31:28],
+                           {4{rotate}} & l2[27:24],
+                           {4{rotate}} & l2[23:20],
+                           {4{rotate}} & l2[19:16],
+                           {4{rotate}} & l2[15:12],
+                           {4{rotate}} & l2[11: 8],
+                           {4{rotate}} & l2[ 7: 4],
+                           {4{rotate}} & l2[ 3: 0]};
+
+wire [31:0] l4_2_left   = {rotate && l2[31], rotate && l2[30],
+                           rotate && l2[29], rotate && l2[28],
+                           rotate && l2[27], rotate && l2[26],
+                           rotate && l2[25], rotate && l2[24],
+                           rotate && l2[23], rotate && l2[22],
+                           rotate && l2[21], rotate && l2[20],
+                           rotate && l2[19], rotate && l2[18],
+                           rotate && l2[17], rotate && l2[16],
+                           rotate && l2[15], rotate && l2[14],
+                           rotate && l2[13], rotate && l2[12],
+                           rotate && l2[11], rotate && l2[10],
+                           rotate && l2[ 9], rotate && l2[ 8],
+                           rotate && l2[ 7], rotate && l2[ 6],
+                           rotate && l2[ 5], rotate && l2[ 4],
+                           rotate && l2[ 3], rotate && l2[ 2],
+                           rotate && l2[ 1], rotate && l2[ 0]};
+
+wire [31:0] l4_2_right  = {rotate && l2[31], rotate && l2[30],
+                           rotate && l2[29], rotate && l2[28],
+                           rotate && l2[27], rotate && l2[26],
+                           rotate && l2[25], rotate && l2[24],
+                           rotate && l2[23], rotate && l2[22],
+                           rotate && l2[21], rotate && l2[20],
+                           rotate && l2[19], rotate && l2[18],
+                           rotate && l2[17], rotate && l2[16],
+                           rotate && l2[15], rotate && l2[14],
+                           rotate && l2[13], rotate && l2[12],
+                           rotate && l2[11], rotate && l2[10],
+                           rotate && l2[ 9], rotate && l2[ 8],
+                           rotate && l2[ 7], rotate && l2[ 6],
+                           rotate && l2[ 5], rotate && l2[ 4],
+                           rotate && l2[ 3], rotate && l2[ 2],
+                           rotate && l2[ 1], rotate && l2[ 0]};
+    
+wire ld_l4_l_32 =left  && w_32 && shamt[2];
+wire ld_l4_r_32 =right && w_32 && shamt[2];
+
+wire ld_l4_l_16 =left  && w_16 && shamt[2];
+wire ld_l4_r_16 =right && w_16 && shamt[2];
+
+wire ld_l4_l_8  =left  && w_8  && shamt[2];
+wire ld_l4_r_8  =right && w_8  && shamt[2];
+
+wire ld_l4_l_4  =left  && w_4  && shamt[2];
+wire ld_l4_r_4  =right && w_4  && shamt[2];
+
+wire ld_l4_l_2  =left  && w_2  && shamt[2];
+wire ld_l4_r_2  =right && w_2  && shamt[2];
+
+wire ld_l4_n_n  =                !shamt[2];
+
+assign l4 = l2; /*
+    {32{ld_l4_l_32}} & l4_32_left    |
+    {32{ld_l4_r_32}} & l4_32_right   |
+    {32{ld_l4_l_16}} & l4_16_left    |
+    {32{ld_l4_r_16}} & l4_16_right   |
+    {32{ld_l4_l_8 }} & l4_8_left     |
+    {32{ld_l4_r_8 }} & l4_8_right    |
+    {32{ld_l4_l_4 }} & l4_4_left     |
+    {32{ld_l4_r_4 }} & l4_4_right    |
+    {32{ld_l4_l_2 }} & l4_2_left     |
+    {32{ld_l4_r_2 }} & l4_2_right    |
+    {32{ld_l4_n_n }} & l2            ;*/
 
 //
 // Level 4 code.
