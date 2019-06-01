@@ -3,6 +3,8 @@ YOSYS       = $(YOSYS_ROOT)/yosys
 YOSYS_SMTBMC= $(YOSYS_ROOT)/yosys-smtbmc
 
 ALL_TARGETS = 
+BMC_TARGETS = 
+SYNTH_TARGETS = 
 
 define tgt_smt2
 ${1} : ${2}
@@ -27,6 +29,7 @@ ${1} : ${2}
         -p "write_verilog ${1}" 
 synth_${3} : ${1}
 ALL_TARGETS += ${1}
+SYNTH_TARGETS += ${1}
 endef
 
 define tgt_bmc
@@ -38,6 +41,7 @@ bmc_${1} : ${2} cov_${1}
         -m ${1} \
         ${2}
 ALL_TARGETS += bmc_${1}
+BMC_TARGETS += bmc_${1}
 endef
 
 define tgt_cover
@@ -108,3 +112,6 @@ $(eval $(call add_targets,$(XC_SHA3_RTL),$(XC_SHA3_VERIF),xc_sha3))
 
 all: $(ALL_TARGETS)
 
+synth-all : $(SYNTH_TARGETS)
+
+bmc-all : $(BMC_TARGETS)
