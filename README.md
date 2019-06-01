@@ -38,7 +38,7 @@ implementing the XCrypto ISE.*
     $> make <module name>
     ```
 
-## Modules implented
+## Modules implemented
 
 This is a list of the modules in the repository and a rough
 estimate of their gate count, as per an example Yosys CMOS flow.
