@@ -35,7 +35,7 @@ wire        output_valid = valid && ready;
 reg  [2:0]  pw_rand ;
 
 always @(posedge clock) begin
-    pw_rand <= $unsigned($random) % 3;
+    pw_rand <= $unsigned($random) % 4;
 end
 
 integer     clock_ticks  = 0;
@@ -75,6 +75,8 @@ always @(posedge clock) begin
             pw      <= 5'b00010;
         end else if(pw_rand == 2) begin
             pw      <= 5'b00100;
+        end else if(pw_rand == 3) begin
+            pw      <= 5'b01000;
         end
 
         clmul   <= 1'b0;
@@ -183,6 +185,15 @@ wire [15:0] psum_8_2  = crs1[23:16] * crs2[23:16];
 wire [15:0] psum_8_1  = crs1[15: 8] * crs2[15: 8];
 wire [15:0] psum_8_0  = crs1[ 7: 0] * crs2[ 7: 0];
 
+wire [ 7:0] psum_4_7  = crs1[31:28] * crs2[31:28];
+wire [ 7:0] psum_4_6  = crs1[27:24] * crs2[27:24];
+wire [ 7:0] psum_4_5  = crs1[23:20] * crs2[23:20];
+wire [ 7:0] psum_4_4  = crs1[19:16] * crs2[19:16];
+wire [ 7:0] psum_4_3  = crs1[15:12] * crs2[15:12];
+wire [ 7:0] psum_4_2  = crs1[11: 8] * crs2[11: 8];
+wire [ 7:0] psum_4_1  = crs1[ 7: 4] * crs2[ 7: 4];
+wire [ 7:0] psum_4_0  = crs1[ 3: 0] * crs2[ 3: 0];
+
 always @(*) begin
 
     acc = 0;
@@ -221,6 +232,23 @@ always @(*) begin
             acc = {
                 psum_8_3[15:8],psum_8_2[15:8],psum_8_1[15:8],psum_8_0[15:8],
                 psum_8_3[ 7:0],psum_8_2[ 7:0],psum_8_1[ 7:0],psum_8_0[ 7:0]
+            };
+
+        end
+
+    end
+    
+    if(pw_4) begin
+
+        if(clmul) begin
+
+        end else begin
+
+            acc = {
+                psum_4_7[7:4],psum_4_6[7:4],psum_4_5[7:4],psum_4_4[7:4],
+                psum_4_3[7:4],psum_4_2[7:4],psum_4_1[7:4],psum_4_0[7:4],
+                psum_4_7[3:0],psum_4_6[3:0],psum_4_5[3:0],psum_4_4[3:0],
+                psum_4_3[3:0],psum_4_2[3:0],psum_4_1[3:0],psum_4_0[3:0]
             };
 
         end

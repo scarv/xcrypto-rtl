@@ -102,13 +102,19 @@ wire [31:0] padd_mask   =   {32{pw_32}} & addm_32   |
 // Inputs to the packed adder
 
 wire [31:0] padd_lhs_32 =  psum[63:32];
+
 wire [31:0] padd_lhs_16 = {psum[63:48], psum[31:16]};
+
 wire [31:0] padd_lhs_8  = {psum[63:56], psum[47:40], psum[31:24], psum[15:8]};
+
+wire [31:0] padd_lhs_4  = {psum[63:60], psum[55:52], psum[47:44], psum[39:36], 
+                           psum[31:28], psum[23:20], psum[15:12], psum[ 7: 4]};
 
 wire [31:0] padd_lhs    = 
     {32{pw_32}} & padd_lhs_32 |
     {32{pw_16}} & padd_lhs_16 |
-    {32{pw_8 }} & padd_lhs_8  ;
+    {32{pw_8 }} & padd_lhs_8  |
+    {32{pw_4 }} & padd_lhs_4  ;
 
 wire [31:0] padd_rhs    = crs1 & padd_mask;
 
@@ -126,22 +132,39 @@ wire [63:0] n_psum_8  = {padd_carry[31],padd_result[31:24],psum[55:49],
                          padd_carry[15],padd_result[15: 8],psum[23:17], 
                          padd_carry[ 7],padd_result[ 7: 0],psum[ 7: 1]};
 
+wire [63:0] n_psum_4  = {padd_carry[31],padd_result[31:28],psum[59:57], 
+                         padd_carry[27],padd_result[27:24],psum[51:49], 
+                         padd_carry[23],padd_result[23:20],psum[43:41], 
+                         padd_carry[19],padd_result[19:16],psum[35:33], 
+                         padd_carry[15],padd_result[15:12],psum[27:25], 
+                         padd_carry[11],padd_result[11: 8],psum[19:17], 
+                         padd_carry[ 7],padd_result[ 7: 4],psum[11: 9], 
+                         padd_carry[ 3],padd_result[ 3: 0],psum[ 3: 1]};
+
 assign n_psum = 
     {64{pw_32}} & n_psum_32 |
     {64{pw_16}} & n_psum_16 |
-    {64{pw_8 }} & n_psum_8  ;
+    {64{pw_8 }} & n_psum_8  |
+    {64{pw_4 }} & n_psum_4  ;
 
 wire [31:0] intermediate = psum >> (32-count);
 
 wire [31:0] result_32 = mul_h ? padd_lhs_32 : psum[31:0];
+
 wire [31:0] result_16 = mul_h ? padd_lhs_16 : {psum[47:32],psum[15:0]};
+
 wire [31:0] result_8  = mul_h ? padd_lhs_8  : 
     {psum[55:48],psum[ 39:32],psum[23:16],psum[ 7:0]};
+
+wire [31:0] result_4  = mul_h ? padd_lhs_4  : 
+    {psum[59:56], psum[51:48], psum[43:40], psum[35:32],
+     psum[27:24], psum[19:16], psum[11: 8], psum[ 3: 0]};
 
 assign result = 
     {32{pw_32}} & result_32 |
     {32{pw_16}} & result_16 |
-    {32{pw_8 }} & result_8  ;
+    {32{pw_8 }} & result_8  |
+    {32{pw_4 }} & result_4  ;
 
 //
 // Update the count register.
