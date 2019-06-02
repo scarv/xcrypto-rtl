@@ -16,8 +16,10 @@ reg  [31:0]  rhs     = $anyseq; // Right hand input.
 reg  [ 4:0]  pw      = $anyseq; // Pack width to operate on
 reg          sub     = $anyseq; // Subtract if set, else add.
 
+wire [31:0]  carry_out  ; // Output from DUT
 wire [31:0]  result     ; // Output from DUT
 wire [31:0]  expectation; // Output from Checker
+wire [31:0]  carry_exp  ; // Output from Checker
 
 wire         pw_32   = pw[0];
 wire         pw_16   = pw[1];
@@ -64,6 +66,7 @@ p_addsub i_p_addsub (
 .rhs   (rhs   ), // Right hand input.
 .pw    (pw    ), // Pack width to operate on
 .sub   (sub   ), // Subtract if set, else add.
+.c_out (c_out ), // Carry out bits
 .result(result)  // Result of the operation
 );
 

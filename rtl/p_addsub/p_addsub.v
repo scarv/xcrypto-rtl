@@ -12,6 +12,7 @@ input  wire [31:0]  rhs             , // Right hand input.
 input  wire [ 4:0]  pw              , // Pack width to operate on
 input  wire [ 0:0]  sub             , // Subtract if set, else add.
 
+output wire [31:0]  c_out           , // Carry bits
 output wire [31:0]  result            // Result of the operation
 
 );
@@ -77,7 +78,7 @@ genvar i;
 generate for(i = 0; i < 32; i = i + 1) begin
 
     wire   c_in     = carry_chain[i];
-    wire   c_out    = (lhs[i] && rhs_m[i]) || (c_in && (lhs[i]^rhs_m[i]));
+    assign c_out[i] = (lhs[i] && rhs_m[i]) || (c_in && (lhs[i]^rhs_m[i]));
     
     wire   force_carry = sub && (
         (i == 15 && pw_16) ||  
@@ -107,7 +108,7 @@ generate for(i = 0; i < 32; i = i + 1) begin
         (i == 27 && pw_2 ) ||
         (i == 29 && pw_2 ) );
 
-    assign carry_chain[i+1] = (c_out && carry_mask[i]) || force_carry;
+    assign carry_chain[i+1] = (c_out[i] && carry_mask[i]) || force_carry;
 
     assign result[i] = lhs[i] ^ rhs_m[i] ^ c_in;
 
