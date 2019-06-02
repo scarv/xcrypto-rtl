@@ -65,7 +65,7 @@ always @(posedge clock) begin
         crs2    <= ($random & 32'hFFFF_FFFF);
         valid   <= $random;
         
-        if($random & 5'b1 == 0) begin
+        if(($random & 5'b1) == 0) begin
             pw      <= 5'b00001;
         end else begin
             pw      <= 5'b00010;
@@ -194,8 +194,8 @@ always @(*) begin
 
         end else begin
 
-            acc = {psum_16_1[31:16], psum_16_0[31:16],
-                   psum_16_1[15: 0], psum_16_0[15: 0]};
+            acc = {psum_16_1,
+                   psum_16_0};
 
         end
 
