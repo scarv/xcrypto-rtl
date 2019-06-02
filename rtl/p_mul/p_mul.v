@@ -103,10 +103,12 @@ wire [31:0] padd_mask   =   {32{pw_32}} & addm_32   |
 
 wire [31:0] padd_lhs_32 =  psum[63:32];
 wire [31:0] padd_lhs_16 = {psum[63:48], psum[31:16]};
+wire [31:0] padd_lhs_8  = {psum[63:56], psum[47:40], psum[31:24], psum[15:8]};
 
 wire [31:0] padd_lhs    = 
     {32{pw_32}} & padd_lhs_32 |
-    {32{pw_16}} & padd_lhs_16 ;
+    {32{pw_16}} & padd_lhs_16 |
+    {32{pw_8 }} & padd_lhs_8  ;
 
 wire [31:0] padd_rhs    = crs1 & padd_mask;
 
@@ -119,13 +121,27 @@ wire [63:0] n_psum_32 = {padd_carry[31],padd_result,psum[31:1]};
 wire [63:0] n_psum_16 = {padd_carry[31],padd_result[31:16],psum[47:33], 
                          padd_carry[15],padd_result[15: 0],psum[15:1 ]};
 
+wire [63:0] n_psum_8  = {padd_carry[31],padd_result[31:24],psum[55:49], 
+                         padd_carry[23],padd_result[23:16],psum[39:33], 
+                         padd_carry[15],padd_result[15: 8],psum[23:17], 
+                         padd_carry[ 7],padd_result[ 7: 0],psum[ 7: 1]};
+
 assign n_psum = 
     {64{pw_32}} & n_psum_32 |
-    {64{pw_16}} & n_psum_16 ;
+    {64{pw_16}} & n_psum_16 |
+    {64{pw_8 }} & n_psum_8  ;
 
 wire [31:0] intermediate = psum >> (32-count);
 
-assign result = mul_l ? psum[31:0] : psum[63:32];
+wire [31:0] result_32 = mul_h ? padd_lhs_32 : psum[31:0];
+wire [31:0] result_16 = mul_h ? padd_lhs_16 : {psum[47:32],psum[15:0]};
+wire [31:0] result_8  = mul_h ? padd_lhs_8  : 
+    {psum[55:48],psum[ 39:32],psum[23:16],psum[ 7:0]};
+
+assign result = 
+    {32{pw_32}} & result_32 |
+    {32{pw_16}} & result_16 |
+    {32{pw_8 }} & result_8  ;
 
 //
 // Update the count register.

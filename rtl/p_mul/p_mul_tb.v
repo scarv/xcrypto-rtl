@@ -34,6 +34,10 @@ wire [31:0] expectation;
 wire        output_valid = valid && ready;
 reg  [2:0]  pw_rand ;
 
+always @(posedge clock) begin
+    pw_rand <= $unsigned($random) % 3;
+end
+
 integer     clock_ticks  = 0;
 parameter   max_ticks    = 10000;
 
@@ -43,7 +47,7 @@ initial begin
     $dumpfile(`STR(`WAVE_FILE));
     $dumpvars(0, p_mul_tb);
 
-
+    pw_rand = 0;
     resetn  = 1'b0;
     clock   = 1'b0;
     valid   = 1'b0;
@@ -65,10 +69,12 @@ always @(posedge clock) begin
         crs2    <= ($random & 32'hFFFF_FFFF);
         valid   <= $random;
         
-        if(($random & 5'b1) == 0) begin
+        if(pw_rand == 0) begin
             pw      <= 5'b00001;
-        end else begin
+        end else if(pw_rand == 1) begin
             pw      <= 5'b00010;
+        end else if(pw_rand == 2) begin
+            pw      <= 5'b00100;
         end
 
         clmul   <= 1'b0;
@@ -172,6 +178,11 @@ assign result =
 wire [31:0] psum_16_1 = crs1[31:16] * crs2[31:16];
 wire [31:0] psum_16_0 = crs1[15: 0] * crs2[15: 0];
 
+wire [15:0] psum_8_3  = crs1[31:24] * crs2[31:24];
+wire [15:0] psum_8_2  = crs1[23:16] * crs2[23:16];
+wire [15:0] psum_8_1  = crs1[15: 8] * crs2[15: 8];
+wire [15:0] psum_8_0  = crs1[ 7: 0] * crs2[ 7: 0];
+
 always @(*) begin
 
     acc = 0;
@@ -194,8 +205,23 @@ always @(*) begin
 
         end else begin
 
-            acc = {psum_16_1,
-                   psum_16_0};
+            acc = {psum_16_1[31:16], psum_16_0[31:16], 
+                   psum_16_1[15: 0], psum_16_0[15: 0]};
+
+        end
+
+    end
+    
+    if(pw_8) begin
+
+        if(clmul) begin
+
+        end else begin
+
+            acc = {
+                psum_8_3[15:8],psum_8_2[15:8],psum_8_1[15:8],psum_8_0[15:8],
+                psum_8_3[ 7:0],psum_8_2[ 7:0],psum_8_1[ 7:0],psum_8_0[ 7:0]
+            };
 
         end
 
