@@ -5,7 +5,7 @@
 //  Dummy module for future use
 //
 module p_mul_ftb (
-    input clock
+    input clock,
     input resetn
 );
 

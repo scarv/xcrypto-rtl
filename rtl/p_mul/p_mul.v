@@ -31,9 +31,10 @@ wire [63:0] n_psum      ; // Next partial sum
 reg  [ 5:0] count       ; // Number of steps executed so far.
 wire [ 5:0] n_count     = count + 1;
 wire [ 5:0] m_count     = {pw[0],pw[1],pw[2],pw[3],pw[4], 1'b0};
-wire        finish      = valid && n_count == m_count;
+wire        finish      = valid && count == m_count;
 
 assign      ready       = finish;
+
 //
 // One-hot pack width wires
 wire pw_32 = pw[0];
@@ -99,15 +100,18 @@ wire [31:0] padd_mask   =   {32{pw_32}} & addm_32   |
                             {32{pw_2 }} & addm_2    ;
 
 // Inputs to the packed adder
-wire [31:0] padd_lhs    = psum[31:0];
+wire [31:0] padd_lhs    = psum[63:32];
 wire [31:0] padd_rhs    = crs1 & padd_mask;
 
 // Result of the packed addition operation
+wire [31:0] padd_carry  ;
 wire [31:0] padd_result ;
 
-assign n_psum = psum;
+assign n_psum = {padd_carry[31],padd_result,psum[31:1]};
 
-assign result = psum;
+wire [31:0] intermediate = psum >> (32-count);
+
+assign result = mul_l ? psum[31:0] : psum[63:32];
 
 //
 // Update the count register.
@@ -131,7 +135,7 @@ always @(posedge clock) begin
     end else if(valid && !finish) begin
         psum <= n_psum;
     end else if(valid &&  finish) begin
-        // Stay the same
+        psum <= 0;
     end else if(!valid) begin
         psum <= 0;
     end
@@ -144,6 +148,7 @@ p_addsub i_paddsub (
 .rhs    (padd_rhs   ), // Right hand input.
 .pw     (pw         ), // Pack width to operate on
 .sub    (1'b0       ), // Subtract if set, else add.
+.c_out  (padd_carry ), // Carry out
 .result (padd_result)  // Result of the operation
 );
 
