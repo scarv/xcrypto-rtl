@@ -107,7 +107,14 @@ wire [31:0] padd_rhs    = crs1 & padd_mask;
 wire [31:0] padd_carry  ;
 wire [31:0] padd_result ;
 
-assign n_psum = {padd_carry[31],padd_result,psum[31:1]};
+wire [63:0] n_psum_32 = {padd_carry[31],padd_result,psum[31:1]};
+
+wire [63:0] n_psum_16 = {padd_carry[31],padd_result[31:16],psum[47:33], 
+                         padd_carry[15],padd_result[15: 1],psum[15:1 ]};
+
+assign n_psum = 
+    {63{pw_32}} & n_psum_32 |
+    {63{pw_16}} & n_psum_16 ;
 
 wire [31:0] intermediate = psum >> (32-count);
 
