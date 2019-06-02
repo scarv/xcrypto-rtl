@@ -35,7 +35,7 @@ wire        output_valid = valid && ready;
 reg  [2:0]  pw_rand ;
 
 always @(posedge clock) begin
-    pw_rand <= $unsigned($random) % 4;
+    pw_rand <= $unsigned($random) % 5;
 end
 
 integer     clock_ticks  = 0;
@@ -77,6 +77,8 @@ always @(posedge clock) begin
             pw      <= 5'b00100;
         end else if(pw_rand == 3) begin
             pw      <= 5'b01000;
+        end else if(pw_rand == 4) begin
+            pw      <= 5'b10000;
         end
 
         clmul   <= 1'b0;
@@ -194,6 +196,23 @@ wire [ 7:0] psum_4_2  = crs1[11: 8] * crs2[11: 8];
 wire [ 7:0] psum_4_1  = crs1[ 7: 4] * crs2[ 7: 4];
 wire [ 7:0] psum_4_0  = crs1[ 3: 0] * crs2[ 3: 0];
 
+wire [ 3:0] psum_2_15 = crs1[31:30] * crs2[31:30];
+wire [ 3:0] psum_2_14 = crs1[29:28] * crs2[29:28];
+wire [ 3:0] psum_2_13 = crs1[27:26] * crs2[27:26];
+wire [ 3:0] psum_2_12 = crs1[25:24] * crs2[25:24];
+wire [ 3:0] psum_2_11 = crs1[23:22] * crs2[23:22];
+wire [ 3:0] psum_2_10 = crs1[21:20] * crs2[21:20];
+wire [ 3:0] psum_2_9  = crs1[19:18] * crs2[19:18];
+wire [ 3:0] psum_2_8  = crs1[17:16] * crs2[17:16];
+wire [ 3:0] psum_2_7  = crs1[15:14] * crs2[15:14];
+wire [ 3:0] psum_2_6  = crs1[13:12] * crs2[13:12];
+wire [ 3:0] psum_2_5  = crs1[11:10] * crs2[11:10];
+wire [ 3:0] psum_2_4  = crs1[ 9: 8] * crs2[ 9: 8];
+wire [ 3:0] psum_2_3  = crs1[ 7: 6] * crs2[ 7: 6];
+wire [ 3:0] psum_2_2  = crs1[ 5: 4] * crs2[ 5: 4];
+wire [ 3:0] psum_2_1  = crs1[ 3: 2] * crs2[ 3: 2];
+wire [ 3:0] psum_2_0  = crs1[ 1: 0] * crs2[ 1: 0];
+
 always @(*) begin
 
     acc = 0;
@@ -249,6 +268,27 @@ always @(*) begin
                 psum_4_3[7:4],psum_4_2[7:4],psum_4_1[7:4],psum_4_0[7:4],
                 psum_4_7[3:0],psum_4_6[3:0],psum_4_5[3:0],psum_4_4[3:0],
                 psum_4_3[3:0],psum_4_2[3:0],psum_4_1[3:0],psum_4_0[3:0]
+            };
+
+        end
+
+    end
+    
+    if(pw_2) begin
+
+        if(clmul) begin
+
+        end else begin
+
+            acc = {
+                psum_2_15[3:2],psum_2_14[3:2],psum_2_13[3:2],psum_2_12[3:2],
+                psum_2_11[3:2],psum_2_10[3:2],psum_2_9 [3:2],psum_2_8 [3:2],
+                psum_2_7 [3:2],psum_2_6 [3:2],psum_2_5 [3:2],psum_2_4 [3:2],
+                psum_2_3 [3:2],psum_2_2 [3:2],psum_2_1 [3:2],psum_2_0 [3:2],
+                psum_2_15[1:0],psum_2_14[1:0],psum_2_13[1:0],psum_2_12[1:0],
+                psum_2_11[1:0],psum_2_10[1:0],psum_2_9 [1:0],psum_2_8 [1:0],
+                psum_2_7 [1:0],psum_2_6 [1:0],psum_2_5 [1:0],psum_2_4 [1:0],
+                psum_2_3 [1:0],psum_2_2 [1:0],psum_2_1 [1:0],psum_2_0 [1:0]
             };
 
         end

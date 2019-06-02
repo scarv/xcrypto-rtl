@@ -110,11 +110,17 @@ wire [31:0] padd_lhs_8  = {psum[63:56], psum[47:40], psum[31:24], psum[15:8]};
 wire [31:0] padd_lhs_4  = {psum[63:60], psum[55:52], psum[47:44], psum[39:36], 
                            psum[31:28], psum[23:20], psum[15:12], psum[ 7: 4]};
 
+wire [31:0] padd_lhs_2  = {psum[63:62], psum[59:58], psum[55:54], psum[51:50], 
+                           psum[47:46], psum[43:42], psum[39:38], psum[35:34], 
+                           psum[31:30], psum[27:26], psum[23:22], psum[19:18], 
+                           psum[15:14], psum[11:10], psum[ 7: 6], psum[ 3: 2]};
+
 wire [31:0] padd_lhs    = 
     {32{pw_32}} & padd_lhs_32 |
     {32{pw_16}} & padd_lhs_16 |
     {32{pw_8 }} & padd_lhs_8  |
-    {32{pw_4 }} & padd_lhs_4  ;
+    {32{pw_4 }} & padd_lhs_4  |
+    {32{pw_2 }} & padd_lhs_2  ;
 
 wire [31:0] padd_rhs    = crs1 & padd_mask;
 
@@ -141,11 +147,29 @@ wire [63:0] n_psum_4  = {padd_carry[31],padd_result[31:28],psum[59:57],
                          padd_carry[ 7],padd_result[ 7: 4],psum[11: 9], 
                          padd_carry[ 3],padd_result[ 3: 0],psum[ 3: 1]};
 
+wire [63:0] n_psum_2  = {padd_carry[31],padd_result[31:30],psum[31], 
+                         padd_carry[29],padd_result[29:28],psum[29], 
+                         padd_carry[27],padd_result[27:26],psum[27], 
+                         padd_carry[25],padd_result[25:24],psum[25], 
+                         padd_carry[23],padd_result[23:22],psum[23], 
+                         padd_carry[21],padd_result[21:20],psum[21], 
+                         padd_carry[19],padd_result[19:18],psum[19], 
+                         padd_carry[17],padd_result[17:16],psum[17], 
+                         padd_carry[15],padd_result[15:14],psum[15], 
+                         padd_carry[13],padd_result[13:12],psum[13], 
+                         padd_carry[11],padd_result[11:10],psum[11], 
+                         padd_carry[ 9],padd_result[ 9: 8],psum[ 9], 
+                         padd_carry[ 7],padd_result[ 7: 6],psum[ 7], 
+                         padd_carry[ 5],padd_result[ 5: 4],psum[ 5], 
+                         padd_carry[ 3],padd_result[ 3: 2],psum[ 3], 
+                         padd_carry[ 1],padd_result[ 1: 0],psum[ 1]};
+
 assign n_psum = 
     {64{pw_32}} & n_psum_32 |
     {64{pw_16}} & n_psum_16 |
     {64{pw_8 }} & n_psum_8  |
-    {64{pw_4 }} & n_psum_4  ;
+    {64{pw_4 }} & n_psum_4  |
+    {64{pw_2 }} & n_psum_2  ;
 
 wire [31:0] intermediate = psum >> (32-count);
 
@@ -160,11 +184,18 @@ wire [31:0] result_4  = mul_h ? padd_lhs_4  :
     {psum[59:56], psum[51:48], psum[43:40], psum[35:32],
      psum[27:24], psum[19:16], psum[11: 8], psum[ 3: 0]};
 
+wire [31:0] result_2  = mul_h ? padd_lhs_2  : 
+    {psum[61:60], psum[57:56], psum[53:52], psum[49:48],
+     psum[45:44], psum[41:40], psum[37:36], psum[33:32], 
+     psum[29:28], psum[25:24], psum[21:20], psum[17:16],
+     psum[13:12], psum[ 9: 8], psum[ 5: 4], psum[ 1: 0]};
+
 assign result = 
     {32{pw_32}} & result_32 |
     {32{pw_16}} & result_16 |
     {32{pw_8 }} & result_8  |
-    {32{pw_4 }} & result_4  ;
+    {32{pw_4 }} & result_4  |
+    {32{pw_2 }} & result_2  ;
 
 //
 // Update the count register.
