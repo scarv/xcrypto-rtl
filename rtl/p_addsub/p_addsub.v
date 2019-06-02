@@ -10,7 +10,7 @@ input  wire [31:0]  lhs             , // Left hand input
 input  wire [31:0]  rhs             , // Right hand input.
 
 input  wire [ 4:0]  pw              , // Pack width to operate on
-input  wire         sub             , // Subtract if set, else add.
+input  wire [ 0:0]  sub             , // Subtract if set, else add.
 
 output wire [31:0]  result            // Result of the operation
 

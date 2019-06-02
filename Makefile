@@ -66,6 +66,20 @@ trs_${1} : ${2}
 ALL_TARGETS += trs_${1}
 endef
 
+define tgt_sim_build
+${1} : ${2}
+	@mkdir -p $(dir ${1})
+	iverilog -g2012 -DWAVE_FILE=$(basename ${1}).vcd -s ${3} -Wall -o ${1} ${2}
+build_sim_${3} :  ${1}
+ALL_TARGETS += ${1}
+endef
+
+define tgt_sim_run
+${1} : ${2}
+	vvp ${2}
+run_sim_${3}: ${1}
+endef
+
 
 #
 # Add a set of targets for a particular instruction
@@ -93,6 +107,13 @@ P_SHFROT_RTL   = rtl/p_shfrot/p_shfrot.v
 P_SHFROT_VERIF = rtl/p_shfrot/p_shfrot_ftb.v
 
 $(eval $(call add_targets,$(P_SHFROT_RTL),$(P_SHFROT_VERIF),p_shfrot))
+
+P_MUL_RTL   = rtl/p_mul/p_mul.v rtl/p_addsub/p_addsub.v
+P_MUL_VERIF = rtl/p_mul/p_mul_tb.v
+
+$(eval $(call add_targets,$(P_MUL_RTL),$(P_MUL_VERIF),p_mul))
+$(eval $(call tgt_sim_build,build/p_mul/p_mul.sim,$(P_MUL_VERIF) $(P_MUL_RTL),p_mul_tb))
+$(eval $(call tgt_sim_run,build/p_mul/p_mul.vcd,build/p_mul/p_mul.sim,p_mul_tb))
 
 B_BOP_RTL   = rtl/b_bop/b_bop.v
 B_BOP_VERIF = rtl/b_bop/b_bop_ftb.v
