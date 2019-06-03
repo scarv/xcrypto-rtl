@@ -49,6 +49,7 @@ Module Name     | Instructions Implemented  | Yosys CMOS Gate Count
 `b_lut`         | `xc.lut`                  | 1280
 `p_addsub`      | `xc.padd`,`xc.psub`       | 554
 `p_shfrot`      | `xc.psrl[.i]`,`xc.psll[.i]`,`xc.prot[.i]` | 1244
+`p_mul`         | `xc.pmul.[l|h]`,`xc.clmul.[l|h]` | 2565 (554 from `p_addsub`)
 `xc_sha3`       | `xc.sha3.[xy,x1,x2,x4,yx]` | 446
 
 ---

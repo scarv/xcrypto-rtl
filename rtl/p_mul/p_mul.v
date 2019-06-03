@@ -128,44 +128,51 @@ wire [31:0] padd_lhs    =
 wire [31:0] padd_rhs    = crs1 & padd_mask;
 
 // Result of the packed addition operation
+wire [31:0] padd_result ; // Modular addition result.
 wire [31:0] padd_carry  ;
-wire [31:0] padd_result ;
+wire [31:0] cadd_result ; // GF addition result.
+wire [31:0] cadd_carry  = 32'b0; //
 
-wire [63:0] n_psum_32 = {padd_carry[31],padd_result,psum[31:1]};
+assign cadd_result = padd_lhs ^ padd_rhs;
 
-wire [63:0] n_psum_16 = {padd_carry[31],padd_result[31:16],psum[47:33], 
-                         padd_carry[15],padd_result[15: 0],psum[15:1 ]};
+wire [31:0] add_result =  clmul ? cadd_result : padd_result;
+wire [31:0] add_carry  =  clmul ? cadd_carry  : padd_carry ;
 
-wire [63:0] n_psum_8  = {padd_carry[31],padd_result[31:24],psum[55:49], 
-                         padd_carry[23],padd_result[23:16],psum[39:33], 
-                         padd_carry[15],padd_result[15: 8],psum[23:17], 
-                         padd_carry[ 7],padd_result[ 7: 0],psum[ 7: 1]};
+wire [63:0] n_psum_32 = {add_carry[31],add_result,psum[31:1]};
 
-wire [63:0] n_psum_4  = {padd_carry[31],padd_result[31:28],psum[59:57], 
-                         padd_carry[27],padd_result[27:24],psum[51:49], 
-                         padd_carry[23],padd_result[23:20],psum[43:41], 
-                         padd_carry[19],padd_result[19:16],psum[35:33], 
-                         padd_carry[15],padd_result[15:12],psum[27:25], 
-                         padd_carry[11],padd_result[11: 8],psum[19:17], 
-                         padd_carry[ 7],padd_result[ 7: 4],psum[11: 9], 
-                         padd_carry[ 3],padd_result[ 3: 0],psum[ 3: 1]};
+wire [63:0] n_psum_16 = {add_carry[31],add_result[31:16],psum[47:33], 
+                         add_carry[15],add_result[15: 0],psum[15:1 ]};
 
-wire [63:0] n_psum_2  = {padd_carry[31],padd_result[31:30],psum[61], 
-                         padd_carry[29],padd_result[29:28],psum[57], 
-                         padd_carry[27],padd_result[27:26],psum[53], 
-                         padd_carry[25],padd_result[25:24],psum[49], 
-                         padd_carry[23],padd_result[23:22],psum[45], 
-                         padd_carry[21],padd_result[21:20],psum[41], 
-                         padd_carry[19],padd_result[19:18],psum[37], 
-                         padd_carry[17],padd_result[17:16],psum[33], 
-                         padd_carry[15],padd_result[15:14],psum[29], 
-                         padd_carry[13],padd_result[13:12],psum[25], 
-                         padd_carry[11],padd_result[11:10],psum[21], 
-                         padd_carry[ 9],padd_result[ 9: 8],psum[17], 
-                         padd_carry[ 7],padd_result[ 7: 6],psum[13], 
-                         padd_carry[ 5],padd_result[ 5: 4],psum[ 9], 
-                         padd_carry[ 3],padd_result[ 3: 2],psum[ 5], 
-                         padd_carry[ 1],padd_result[ 1: 0],psum[ 1]};
+wire [63:0] n_psum_8  = {add_carry[31],add_result[31:24],psum[55:49], 
+                         add_carry[23],add_result[23:16],psum[39:33], 
+                         add_carry[15],add_result[15: 8],psum[23:17], 
+                         add_carry[ 7],add_result[ 7: 0],psum[ 7: 1]};
+
+wire [63:0] n_psum_4  = {add_carry[31],add_result[31:28],psum[59:57], 
+                         add_carry[27],add_result[27:24],psum[51:49], 
+                         add_carry[23],add_result[23:20],psum[43:41], 
+                         add_carry[19],add_result[19:16],psum[35:33], 
+                         add_carry[15],add_result[15:12],psum[27:25], 
+                         add_carry[11],add_result[11: 8],psum[19:17], 
+                         add_carry[ 7],add_result[ 7: 4],psum[11: 9], 
+                         add_carry[ 3],add_result[ 3: 0],psum[ 3: 1]};
+
+wire [63:0] n_psum_2  = {add_carry[31],add_result[31:30],psum[61], 
+                         add_carry[29],add_result[29:28],psum[57], 
+                         add_carry[27],add_result[27:26],psum[53], 
+                         add_carry[25],add_result[25:24],psum[49], 
+                         add_carry[23],add_result[23:22],psum[45], 
+                         add_carry[21],add_result[21:20],psum[41], 
+                         add_carry[19],add_result[19:18],psum[37], 
+                         add_carry[17],add_result[17:16],psum[33], 
+                         add_carry[15],add_result[15:14],psum[29], 
+                         add_carry[13],add_result[13:12],psum[25], 
+                         add_carry[11],add_result[11:10],psum[21], 
+                         add_carry[ 9],add_result[ 9: 8],psum[17], 
+                         add_carry[ 7],add_result[ 7: 6],psum[13], 
+                         add_carry[ 5],add_result[ 5: 4],psum[ 9], 
+                         add_carry[ 3],add_result[ 3: 2],psum[ 5], 
+                         add_carry[ 1],add_result[ 1: 0],psum[ 1]};
 
 assign n_psum = 
     {64{pw_32}} & n_psum_32 |
