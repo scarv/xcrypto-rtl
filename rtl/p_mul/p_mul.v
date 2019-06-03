@@ -105,15 +105,18 @@ wire [31:0] padd_lhs_32 =  psum[63:32];
 
 wire [31:0] padd_lhs_16 = {psum[63:48], psum[31:16]};
 
-wire [31:0] padd_lhs_8  = {psum[63:56], psum[47:40], psum[31:24], psum[15:8]};
+wire [31:0] padd_lhs_8  =
+    {psum[63:56], psum[47:40], psum[31:24], psum[15:8]};
 
-wire [31:0] padd_lhs_4  = {psum[63:60], psum[55:52], psum[47:44], psum[39:36], 
-                           psum[31:28], psum[23:20], psum[15:12], psum[ 7: 4]};
+wire [31:0] padd_lhs_4  = 
+    {psum[63:60], psum[55:52], psum[47:44], psum[39:36], 
+     psum[31:28], psum[23:20], psum[15:12], psum[ 7: 4]};
 
-wire [31:0] padd_lhs_2  = {psum[63:62], psum[59:58], psum[55:54], psum[51:50], 
-                           psum[47:46], psum[43:42], psum[39:38], psum[35:34], 
-                           psum[31:30], psum[27:26], psum[23:22], psum[19:18], 
-                           psum[15:14], psum[11:10], psum[ 7: 6], psum[ 3: 2]};
+wire [31:0] padd_lhs_2  =
+    {psum[63:62], psum[59:58], psum[55:54], psum[51:50], 
+     psum[47:46], psum[43:42], psum[39:38], psum[35:34], 
+     psum[31:30], psum[27:26], psum[23:22], psum[19:18], 
+     psum[15:14], psum[11:10], psum[ 7: 6], psum[ 3: 2]};
 
 wire [31:0] padd_lhs    = 
     {32{pw_32}} & padd_lhs_32 |
@@ -185,9 +188,9 @@ wire [31:0] result_4  = mul_h ? padd_lhs_4  :
      psum[27:24], psum[19:16], psum[11: 8], psum[ 3: 0]};
 
 wire [31:0] result_2  = mul_h ? padd_lhs_2  : 
-    {psum[61:60], psum[57:56], psum[53:52], psum[49:48],
+    {psum[61:60], psum[57:56], psum[53:52], psum[49:48], 
      psum[45:44], psum[41:40], psum[37:36], psum[33:32], 
-     psum[29:28], psum[25:24], psum[21:20], psum[17:16],
+     psum[29:28], psum[25:24], psum[21:20], psum[17:16], 
      psum[13:12], psum[ 9: 8], psum[ 5: 4], psum[ 1: 0]};
 
 assign result = 
