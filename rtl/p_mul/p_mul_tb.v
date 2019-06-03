@@ -39,7 +39,7 @@ always @(posedge clock) begin
 end
 
 integer     clock_ticks  = 0;
-parameter   max_ticks    = 10000;
+parameter   max_ticks    = 100000;
 
 // Initial values
 initial begin
@@ -65,8 +65,8 @@ always @(posedge clock) begin
 
     // Randomise inputs.
     if(!valid || (valid && ready)) begin
-        crs1    <= 32'h10; //($random & 32'hFFFF_FFFF);
-        crs2    <= 32'h10; //($random & 32'hFFFF_FFFF);
+        crs1    <= ($random & 32'hFFFF_FFFF);
+        crs2    <= ($random & 32'hFFFF_FFFF);
         valid   <= $random;
         
         if(pw_rand == 0) begin
