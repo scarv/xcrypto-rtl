@@ -3,6 +3,10 @@
 // module: p_mul
 //
 //  Implements the packed multiply and carryless multiply instructions.
+//  Uses a dedicated instance of p_addsub.
+//
+//  For area-optimised designs which share resources, consider using the
+//  p_mul_core module, which exposes it's interface to the p_addsub module.
 //
 module p_mul (
 
@@ -21,6 +25,87 @@ input  [31:0]   crs1    ,
 input  [31:0]   crs2    ,
 
 output [31:0]   result
+
+);
+
+wire [31:0]   padd_lhs    ; // Left hand input
+wire [31:0]   padd_rhs    ; // Right hand input.
+
+wire [ 4:0]   padd_pw     ; // Pack width to operate on
+wire [ 0:0]   padd_sub    ; // Subtract if set, else add.
+
+wire [31:0]   padd_carry  ; // Carry bits
+wire [31:0]   padd_result ; // Result of the operation
+
+//
+// Instance of the packed multipler core module
+p_mul_core i_p_mul_core(
+.clock      (clock      ),
+.resetn     (resetn     ),
+.valid      (valid      ), // Input is valid
+.ready      (ready      ), // Output is ready
+.mul_l      (mul_l      ), // Low half of result?
+.mul_h      (mul_h      ), // High half of result?
+.clmul      (clmul      ), // Do a carryless multiply?
+.pw         (pw         ), // Pack width specifier
+.crs1       (crs1       ), // Source register 1
+.crs2       (crs2       ), // Source register 2
+.result     (result     ), // [Carryless] multiply result
+.padd_lhs   (padd_lhs   ), // Left hand input
+.padd_rhs   (padd_rhs   ), // Right hand input.
+.padd_pw    (padd_pw    ), // Pack width to operate on
+.padd_sub   (padd_sub   ), // Subtract if set, else add.
+.padd_carry (padd_carry ), // Carry bits
+.padd_result(padd_result)  // Result of the operation
+);
+
+//
+// Packed adder instance
+p_addsub i_paddsub (
+.lhs    (padd_lhs   ), // Left hand input
+.rhs    (padd_rhs   ), // Right hand input.
+.pw     (padd_pw    ), // Pack width to operate on
+.sub    (padd_sub   ), // Subtract if set, else add.
+.c_out  (padd_carry ), // Carry out
+.result (padd_result)  // Result of the operation
+);
+
+endmodule
+
+
+//
+// module: p_mul_core
+//
+//  Core functionality of the multiplier that cannot be shared by other
+//  blocks. Exposes an external interface which expects to be connected
+//  to the p_addsub module.
+//
+module p_mul_core (
+
+input              clock       ,
+input              resetn      ,
+
+input              valid       , // Input is valid
+output      [ 0:0] ready       , // Output is ready
+
+input              mul_l       , // Low half of result?
+input              mul_h       , // High half of result?
+input              clmul       , // Do a carryless multiply?
+input       [4:0]  pw          , // Pack width specifier
+
+input       [31:0] crs1        , // Source register 1
+input       [31:0] crs2        , // Source register 2
+
+output wire [31:0] result      , // [Carryless] multiply result
+
+output wire [31:0] padd_lhs    , // Left hand input
+output wire [31:0] padd_rhs    , // Right hand input.
+
+output wire [ 4:0] padd_pw     , // Pack width to operate on
+output wire [ 0:0] padd_sub    , // Subtract if set, else add.
+
+input       [31:0] padd_carry  , // Carry bits
+input       [31:0] padd_result   // Result of the operation
 
 );
 
@@ -118,18 +203,19 @@ wire [31:0] padd_lhs_2  =
      psum[31:30], psum[27:26], psum[23:22], psum[19:18], 
      psum[15:14], psum[11:10], psum[ 7: 6], psum[ 3: 2]};
 
-wire [31:0] padd_lhs    = 
+assign padd_lhs    = 
     {32{pw_32}} & padd_lhs_32 |
     {32{pw_16}} & padd_lhs_16 |
     {32{pw_8 }} & padd_lhs_8  |
     {32{pw_4 }} & padd_lhs_4  |
     {32{pw_2 }} & padd_lhs_2  ;
 
-wire [31:0] padd_rhs    = crs1 & padd_mask;
+assign padd_rhs    = crs1 & padd_mask;
+
+assign        padd_pw     = pw;
+assign        padd_sub    = 1'b0;
 
 // Result of the packed addition operation
-wire [31:0] padd_result ; // Modular addition result.
-wire [31:0] padd_carry  ;
 wire [31:0] cadd_result ; // GF addition result.
 wire [31:0] cadd_carry  = 32'b0; //
 
@@ -234,16 +320,5 @@ always @(posedge clock) begin
         psum <= 0;
     end
 end
-
-//
-// Packed adder instance
-p_addsub i_paddsub (
-.lhs    (padd_lhs   ), // Left hand input
-.rhs    (padd_rhs   ), // Right hand input.
-.pw     (pw         ), // Pack width to operate on
-.sub    (1'b0       ), // Subtract if set, else add.
-.c_out  (padd_carry ), // Carry out
-.result (padd_result)  // Result of the operation
-);
 
 endmodule
