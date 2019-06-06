@@ -9,6 +9,15 @@ implementing the XCrypto ISE.*
 
 ---
 
+This repository houses a collection of re-usable hardware modules, which
+implement core functionality of the
+[XCrypto](https://github.com/scarv/xcrypto) ISE.
+These implementations are a work in progress, and are a subset of those
+found in our 
+[reference implementation](https://github.com/scarv/xcrypto-ref).
+Over time, this repository will become the starting point for future
+implementations of XCrypto.
+
 ## Quickstart
 
 - Clone the repository using:
