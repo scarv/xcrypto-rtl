@@ -133,6 +133,10 @@ XC_SHA3_VERIF = rtl/xc_sha3/xc_sha3_ftb.v
 
 $(eval $(call add_targets,$(XC_SHA3_RTL),$(XC_SHA3_VERIF),xc_sha3))
 
+XC_SHA256_RTL   = rtl/xc_sha256/xc_sha256.v
+XC_SHA256_VERIF = rtl/xc_sha256/xc_sha256_ftb.v
+
+$(eval $(call add_targets,$(XC_SHA256_RTL),$(XC_SHA256_VERIF),xc_sha256))
 
 all: $(ALL_TARGETS)
 
