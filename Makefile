@@ -138,6 +138,11 @@ XC_SHA256_VERIF = rtl/xc_sha256/xc_sha256_ftb.v
 
 $(eval $(call add_targets,$(XC_SHA256_RTL),$(XC_SHA256_VERIF),xc_sha256))
 
+XC_SHA512_RTL   = rtl/xc_sha512/xc_sha512.v
+XC_SHA512_VERIF = rtl/xc_sha512/xc_sha512_ftb.v
+
+$(eval $(call add_targets,$(XC_SHA512_RTL),$(XC_SHA512_VERIF),xc_sha512))
+
 all: $(ALL_TARGETS)
 
 synth-all : $(SYNTH_TARGETS)
