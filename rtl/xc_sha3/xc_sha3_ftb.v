@@ -118,8 +118,8 @@ output reg  [31:0] result     //
 
 );
 
-wire [4:0] x = rs1[4:0];
-wire [4:0] y = rs2[4:0];
+wire [2:0] x = rs1[2:0];
+wire [2:0] y = rs2[2:0];
 
 
 always @(*) begin
