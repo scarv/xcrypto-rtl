@@ -33,27 +33,25 @@ SYNTH_TARGETS += ${1}
 endef
 
 define tgt_bmc
-${2}.bmc.log : ${2} ${2}.cov.log
+bmc_${1} : ${2} cov_${1}
 	$(YOSYS_SMTBMC) \
         -t 5 \
         --dump-vcd ${3} \
         -s boolector \
         -m ${1} \
-        ${2} | tee ${2}.bmc.log
-bmc_${1} : ${2}.log
+        ${2}
 ALL_TARGETS += bmc_${1}
 BMC_TARGETS += bmc_${1}
 endef
 
 define tgt_cover
-${2}.cov.log : ${2}
+cov_${1} : ${2}
 	$(YOSYS_SMTBMC) \
         -t 5 -c \
         --dump-vcd ${3} \
         -s boolector \
         -m ${1} \
-        ${2} | tee ${2}.cov.log
-cov_${1} : ${2}.cov.log
+        ${2}
 ALL_TARGETS += cov_${1}
 endef
 
@@ -108,6 +106,7 @@ include rtl/p_shfrot/Makefile.in
 include rtl/xc_sha256/Makefile.in
 include rtl/xc_sha3/Makefile.in
 include rtl/xc_sha512/Makefile.in
+include rtl/xc_aesmix/Makefile.in
 
 all: $(ALL_TARGETS)
 
