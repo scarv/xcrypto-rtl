@@ -33,25 +33,27 @@ SYNTH_TARGETS += ${1}
 endef
 
 define tgt_bmc
-bmc_${1} : ${2} cov_${1}
+${2}.bmc.log : ${2} ${2}.cov.log
 	$(YOSYS_SMTBMC) \
         -t 5 \
         --dump-vcd ${3} \
         -s boolector \
         -m ${1} \
-        ${2}
+        ${2} | tee ${2}.bmc.log
+bmc_${1} : ${2}.log
 ALL_TARGETS += bmc_${1}
 BMC_TARGETS += bmc_${1}
 endef
 
 define tgt_cover
-cov_${1} : ${2}
+${2}.cov.log : ${2}
 	$(YOSYS_SMTBMC) \
         -t 5 -c \
         --dump-vcd ${3} \
         -s boolector \
         -m ${1} \
-        ${2}
+        ${2} | tee ${2}.cov.log
+cov_${1} : ${2}.cov.log
 ALL_TARGETS += cov_${1}
 endef
 
@@ -98,50 +100,14 @@ ${3} : build/${3}/${3}.smt2 build/${3}/${3}.v bmc_${3}_ftb
 
 endef
 
-P_ADDSUB_RTL   = rtl/p_addsub/p_addsub.v
-P_ADDSUB_VERIF = rtl/p_addsub/p_addsub_ftb.v
-
-$(eval $(call add_targets,$(P_ADDSUB_RTL),$(P_ADDSUB_VERIF),p_addsub))
-
-P_SHFROT_RTL   = rtl/p_shfrot/p_shfrot.v
-P_SHFROT_VERIF = rtl/p_shfrot/p_shfrot_ftb.v
-
-$(eval $(call add_targets,$(P_SHFROT_RTL),$(P_SHFROT_VERIF),p_shfrot))
-
-P_MUL_RTL   = rtl/p_mul/p_mul.v \
-              rtl/p_addsub/p_addsub.v \
-              rtl/p_shfrot/p_shfrot.v
-P_MUL_SIM   = rtl/p_mul/p_mul_tb.v
-P_MUL_VERIF = rtl/p_mul/p_mul_ftb.v
-
-$(eval $(call add_targets,$(P_MUL_RTL),$(P_MUL_VERIF),p_mul))
-$(eval $(call tgt_sim_build,build/p_mul/p_mul.sim,$(P_MUL_SIM) $(P_MUL_RTL),p_mul_tb))
-$(eval $(call tgt_sim_run,build/p_mul/p_mul.vcd,build/p_mul/p_mul.sim,p_mul_tb))
-
-B_BOP_RTL   = rtl/b_bop/b_bop.v
-B_BOP_VERIF = rtl/b_bop/b_bop_ftb.v
-
-$(eval $(call add_targets,$(B_BOP_RTL),$(B_BOP_VERIF),b_bop))
-
-B_LUT_RTL   = rtl/b_lut/b_lut.v
-B_LUT_VERIF = rtl/b_lut/b_lut_ftb.v
-
-$(eval $(call add_targets,$(B_LUT_RTL),$(B_LUT_VERIF),b_lut))
-
-XC_SHA3_RTL   = rtl/xc_sha3/xc_sha3.v
-XC_SHA3_VERIF = rtl/xc_sha3/xc_sha3_ftb.v
-
-$(eval $(call add_targets,$(XC_SHA3_RTL),$(XC_SHA3_VERIF),xc_sha3))
-
-XC_SHA256_RTL   = rtl/xc_sha256/xc_sha256.v
-XC_SHA256_VERIF = rtl/xc_sha256/xc_sha256_ftb.v
-
-$(eval $(call add_targets,$(XC_SHA256_RTL),$(XC_SHA256_VERIF),xc_sha256))
-
-XC_SHA512_RTL   = rtl/xc_sha512/xc_sha512.v
-XC_SHA512_VERIF = rtl/xc_sha512/xc_sha512_ftb.v
-
-$(eval $(call add_targets,$(XC_SHA512_RTL),$(XC_SHA512_VERIF),xc_sha512))
+include rtl/b_bop/Makefile.in
+include rtl/b_lut/Makefile.in
+include rtl/p_addsub/Makefile.in
+include rtl/p_mul/Makefile.in
+include rtl/p_shfrot/Makefile.in
+include rtl/xc_sha256/Makefile.in
+include rtl/xc_sha3/Makefile.in
+include rtl/xc_sha512/Makefile.in
 
 all: $(ALL_TARGETS)
 
