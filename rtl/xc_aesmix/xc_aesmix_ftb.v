@@ -9,7 +9,7 @@ input reset
 reg         valid = $anyseq; // Are the inputs valid?
 reg [31:0]  rs1   = $anyseq; // Input source register 1
 reg [31:0]  rs2   = $anyseq; // Input source register 2
-reg [31:0]  enc   = $anyseq; // Perform encrypt (set) or decrypt (clear).
+reg         enc   = $anyseq; // Perform encrypt (set) or decrypt (clear).
 
 wire        dut_ready ; // Is the instruction complete?
 wire [31:0] dut_result; // 

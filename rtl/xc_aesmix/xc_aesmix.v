@@ -12,7 +12,7 @@ input  wire        reset ,
 input  wire        valid , // Are the inputs valid?
 input  wire [31:0] rs1   , // Input source register 1
 input  wire [31:0] rs2   , // Input source register 2
-input  wire [31:0] enc   , // Perform encrypt (set) or decrypt (clear).
+input  wire        enc   , // Perform encrypt (set) or decrypt (clear).
 output wire        ready , // Is the instruction complete?
 output wire [31:0] result  // 
 
