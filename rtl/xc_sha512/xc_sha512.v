@@ -23,25 +23,31 @@ wire s1 = ss == 2'b01;
 wire s2 = ss == 2'b10;
 wire s3 = ss == 2'b11;
 
-wire [63:0] pr_0 =
-    {64{s0}} & (`ROR64(rs1, 1)) |
-    {64{s1}} & (`ROR64(rs1,19)) |
-    {64{s2}} & (`ROR64(rs1,28)) |
-    {64{s3}} & (`ROR64(rs1,14)) ;
+wire [63:0] s0_result = 
+    (`ROR64(rs1, 1)) ^
+    (`ROR64(rs1, 8)) ^
+    (`SRL64(rs1, 7)) ;
 
-wire [63:0] pr_1 =
-    {64{s0}} & (`ROR64(rs1, 8)) |
-    {64{s1}} & (`ROR64(rs1,61)) |
-    {64{s2}} & (`ROR64(rs1,34)) |
-    {64{s3}} & (`ROR64(rs1,18)) ;
+wire [63:0] s1_result = 
+    (`ROR64(rs1,19)) ^
+    (`ROR64(rs1,61)) ^
+    (`SRL64(rs1, 6)) ;
 
-wire [63:0] pr_2 =
-    {64{s0}} & (`SRL64(rs1, 7)) |
-    {64{s1}} & (`SRL64(rs1, 6)) |
-    {64{s2}} & (`ROR64(rs1,39)) |
-    {64{s3}} & (`ROR64(rs1,41)) ;
+wire [63:0] s2_result = 
+    (`ROR64(rs1,28)) ^
+    (`ROR64(rs1,34)) ^
+    (`ROR64(rs1,39)) ;
 
-assign result = pr_0 ^ pr_1 ^ pr_2;
+wire [63:0] s3_result = 
+    (`ROR64(rs1,14)) ^
+    (`ROR64(rs1,18)) ^
+    (`ROR64(rs1,41)) ;
+
+assign result =
+    {64{s0}} & s0_result |
+    {64{s1}} & s1_result |
+    {64{s2}} & s2_result |
+    {64{s3}} & s3_result ;
 
 `undef ROR64
 `undef SRL64

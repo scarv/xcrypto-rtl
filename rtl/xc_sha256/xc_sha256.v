@@ -23,25 +23,31 @@ wire s1 = ss == 2'b01;
 wire s2 = ss == 2'b10;
 wire s3 = ss == 2'b11;
 
-wire [31:0] pr_0 =
-    {32{s0}} & (`ROR32(rs1, 7)) |
-    {32{s1}} & (`ROR32(rs1,17)) |
-    {32{s2}} & (`ROR32(rs1, 2)) |
-    {32{s3}} & (`ROR32(rs1, 6)) ;
+wire [31:0] s0_result = 
+    (`ROR32(rs1, 7)) ^
+    (`ROR32(rs1,18)) ^
+    (`SRL32(rs1, 3)) ;
 
-wire [31:0] pr_1 =
-    {32{s0}} & (`ROR32(rs1,18)) |
-    {32{s1}} & (`ROR32(rs1,19)) |
-    {32{s2}} & (`ROR32(rs1,13)) |
-    {32{s3}} & (`ROR32(rs1,11)) ;
+wire [31:0] s1_result = 
+    (`ROR32(rs1,17)) ^
+    (`ROR32(rs1,19)) ^
+    (`SRL32(rs1,10)) ;
 
-wire [31:0] pr_2 =
-    {32{s0}} & (`SRL32(rs1, 3)) |
-    {32{s1}} & (`SRL32(rs1,10)) |
-    {32{s2}} & (`ROR32(rs1,22)) |
-    {32{s3}} & (`ROR32(rs1,25)) ;
+wire [31:0] s2_result = 
+    (`ROR32(rs1, 2)) ^
+    (`ROR32(rs1,13)) ^
+    (`ROR32(rs1,22)) ;
 
-assign result = pr_0 ^ pr_1 ^ pr_2;
+wire [31:0] s3_result = 
+    (`ROR32(rs1, 6)) ^
+    (`ROR32(rs1,11)) ^
+    (`ROR32(rs1,25)) ;
+
+assign result =
+    {32{s0}} & s0_result |
+    {32{s1}} & s1_result |
+    {32{s2}} & s2_result |
+    {32{s3}} & s3_result ;
 
 `undef ROR32
 `undef SRL32
