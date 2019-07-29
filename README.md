@@ -28,6 +28,11 @@ implementations of XCrypto.
 - Setup the project environment:
     ```
     $> source bin/conf.sh
+    -------------------------[Setting Up Project]--------------------------
+    REPO_HOME      = <...>/xcrypto-rtl
+    XC_WORK        = <...>/xcrypto-rtl/build
+    YOSYS_ROOT     = 
+    ------------------------------[Finished]-------------------------------
     ```
 
 - Synthesise all of the RTL modules:
@@ -47,6 +52,11 @@ implementations of XCrypto.
     $> make <module name>
     ```
 
+- Run all everything on everything:
+    ```
+    $> make all
+    ```
+
 ## Modules implemented
 
 This is a list of the modules in the repository and a rough
@@ -60,6 +70,10 @@ Module Name     | Instructions Implemented  | Yosys CMOS Gate Count
 `p_shfrot`      | `xc.psrl[.i]`,`xc.psll[.i]`,`xc.prot[.i]` | 1244
 `p_mul`         | `xc.pmul.[l,h]`,`xc.clmul.[l,h]` | 2565 (554 from `p_addsub`)
 `xc_sha3`       | `xc.sha3.[xy,x1,x2,x4,yx]` | 446
+`xc_sha256`     | `xc.sha256.s[0,1,2,3]` | 931
+`xc_sha512`     | `xc.sha512.s[0,1,2,3]` | 2018
+`xc_aessub`     | `xc.aessub.[enc,dec][rot]` | 4210 (single cycle)
+`xc_aesmix`     | `xc.aesmix.[enc,dec]` | 2158 (single cycle)
 
 ---
 
