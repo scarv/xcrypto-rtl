@@ -25,6 +25,8 @@ output wire [31:0] result     //
 wire [2:0] in_x         = rs1[2:0];
 wire [2:0] in_y         = rs2[2:0];
 
+/* verilator lint_off WIDTH */
+
 wire [4:0] in_x_plus    = in_x + {f_x4,f_x2,f_x1};
 wire [6:0] in_y_plus    = {in_x, 1'b0} + {{2'b00,in_y,1'b0} + in_y};
 
@@ -41,7 +43,9 @@ wire [4:0] result_sum   = lut_out_lhs + sum_rhs;
 wire [5:0] shf_1        = shamt[0] ? {result_sum,1'b0} : {1'b0, result_sum};
 wire [7:0] shf_2        = shamt[1] ? {shf_1,2'b0     } : {2'b0, shf_1     };
 
-assign result           = shf_2;
+/* verilator lint_on WIDTH */
+
+assign result           = {24'b0,shf_2};
 
 
 endmodule
