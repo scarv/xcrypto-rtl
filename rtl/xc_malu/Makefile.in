@@ -1,0 +1,10 @@
+
+XC_MALU_RTL   = rtl/xc_malu/xc_malu.v \
+                rtl/p_addsub/p_addsub.v  
+XC_MALU_SIM   = rtl/xc_malu/xc_malu_tb.v \
+                rtl/p_mul/p_mul_checker.v
+
+$(eval $(call tgt_sim_build,build/xc_malu/xc_malu.sim,$(XC_MALU_SIM) $(XC_MALU_RTL),xc_malu_tb))
+$(eval $(call tgt_sim_run,build/xc_malu/xc_malu.vcd,build/xc_malu/xc_malu.sim,xc_malu_tb))
+
+$(eval $(call tgt_synth,build/xc_malu/xc_malu.v,$(XC_MALU_RTL),xc_malu))
