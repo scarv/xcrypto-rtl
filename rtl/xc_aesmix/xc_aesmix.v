@@ -27,8 +27,8 @@ assign ready = valid;
 function [7:0] xtime2;
     input [7:0] a;
 
-    xtime2 = ((a >> 7) & 1'b1) ? (a << 1) ^ 8'h1b :
-                                (a << 1)         ;
+    xtime2  =|((a >> 7) & 8'b1) ? (a << 1) ^ 8'h1b :
+                                 (a << 1)         ;
 endfunction
 
 //

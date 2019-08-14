@@ -28,8 +28,10 @@ wire pw_2  = pw[4];
 
 // Carry bit masks
 (*keep*)
+    /* verilator lint_off UNOPTFLAT */
 wire [31:0] carry_mask;
 wire [32:0] carry_chain;
+/* verilator lint_on UNOPTFLAT */
 
 // Carry in IFF subtracting.
 assign      carry_chain[0] = sub;
@@ -79,7 +81,9 @@ genvar i;
 generate for(i = 0; i < 32; i = i + 1) begin
 
     wire   c_in     = carry_chain[i];
-    assign c_out[i] = (lhs[i] && rhs_m[i]) || (c_in && (lhs[i]^rhs_m[i]));
+
+    wire   carry    = (lhs[i] && rhs_m[i]) || (c_in && (lhs[i]^rhs_m[i]));
+    assign c_out[i] = carry;
     
     wire   force_carry = sub && (
         (i == 15 && pw_16) ||  
@@ -109,7 +113,7 @@ generate for(i = 0; i < 32; i = i + 1) begin
         (i == 27 && pw_2 ) ||
         (i == 29 && pw_2 ) );
 
-    assign carry_chain[i+1] = (c_out[i] && carry_mask[i]) || force_carry;
+    assign carry_chain[i+1] = (carry && carry_mask[i]) || force_carry;
 
     assign result[i] = lhs[i] ^ rhs_m[i] ^ c_in;
 
