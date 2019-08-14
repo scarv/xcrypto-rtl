@@ -66,6 +66,7 @@ p_addsub i_p_addsub (
 .rhs   (rhs   ), // Right hand input.
 .pw    (pw    ), // Pack width to operate on
 .sub   (sub   ), // Subtract if set, else add.
+.c_en  (1'b1  ), //
 .c_out (c_out ), // Carry out bits
 .result(result)  // Result of the operation
 );

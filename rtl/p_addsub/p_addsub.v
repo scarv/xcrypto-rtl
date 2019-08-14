@@ -2,7 +2,7 @@
 //
 // module: p_addsub
 //
-//  Implemented packed addition/subtraction for 32-bit 2s complemente values.
+//  Implemented packed addition/subtraction for 32-bit 2s complement values.
 //
 module p_addsub (
 
@@ -12,6 +12,7 @@ input  wire [31:0]  rhs             , // Right hand input.
 input  wire [ 4:0]  pw              , // Pack width to operate on
 input  wire [ 0:0]  sub             , // Subtract if set, else add.
 
+input  wire         c_en            , // Carry enable bits.
 output wire [31:0]  c_out           , // Carry bits
 output wire [31:0]  result            // Result of the operation
 
@@ -38,38 +39,38 @@ wire [31:0] rhs_m          = sub ? ~rhs : rhs;
 
 //
 // Generate the carry mask bits.
-assign carry_mask[ 0] = 1'b1;
-assign carry_mask[ 1] = !pw_2;
-assign carry_mask[ 2] = 1'b1;
-assign carry_mask[ 3] = !pw_2 && !pw_4;
-assign carry_mask[ 4] = 1'b1;
-assign carry_mask[ 5] = !pw_2;
-assign carry_mask[ 6] = 1'b1;
-assign carry_mask[ 7] = !pw_2 && !pw_4 && !pw_8;
-assign carry_mask[ 8] = 1'b1;
-assign carry_mask[ 9] = !pw_2;
-assign carry_mask[10] = 1'b1;
-assign carry_mask[11] = !pw_2 && !pw_4;
-assign carry_mask[12] = 1'b1;
-assign carry_mask[13] = !pw_2;
-assign carry_mask[14] = 1'b1;
-assign carry_mask[15] = !pw_2 && !pw_4 && !pw_8 && !pw_16;
-assign carry_mask[16] = 1'b1;
-assign carry_mask[17] = !pw_2;
-assign carry_mask[18] = 1'b1;
-assign carry_mask[19] = !pw_2 && !pw_4;
-assign carry_mask[20] = 1'b1;
-assign carry_mask[21] = !pw_2;
-assign carry_mask[22] = 1'b1;
-assign carry_mask[23] = !pw_2 && !pw_4 && !pw_8;
-assign carry_mask[24] = 1'b1;
-assign carry_mask[25] = !pw_2;
-assign carry_mask[26] = 1'b1;
-assign carry_mask[27] = !pw_2 && !pw_4;
-assign carry_mask[28] = 1'b1;
-assign carry_mask[29] = !pw_2;
-assign carry_mask[30] = 1'b1;
-assign carry_mask[31] = !pw_2 && !pw_4 && !pw_8 && !pw_16;
+assign carry_mask[ 0] = c_en && 1'b1;
+assign carry_mask[ 1] = c_en && !pw_2;
+assign carry_mask[ 2] = c_en && 1'b1;
+assign carry_mask[ 3] = c_en && !pw_2 && !pw_4;
+assign carry_mask[ 4] = c_en && 1'b1;
+assign carry_mask[ 5] = c_en && !pw_2;
+assign carry_mask[ 6] = c_en && 1'b1;
+assign carry_mask[ 7] = c_en && !pw_2 && !pw_4 && !pw_8;
+assign carry_mask[ 8] = c_en && 1'b1;
+assign carry_mask[ 9] = c_en && !pw_2;
+assign carry_mask[10] = c_en && 1'b1;
+assign carry_mask[11] = c_en && !pw_2 && !pw_4;
+assign carry_mask[12] = c_en && 1'b1;
+assign carry_mask[13] = c_en && !pw_2;
+assign carry_mask[14] = c_en && 1'b1;
+assign carry_mask[15] = c_en && !pw_2 && !pw_4 && !pw_8 && !pw_16;
+assign carry_mask[16] = c_en && 1'b1;
+assign carry_mask[17] = c_en && !pw_2;
+assign carry_mask[18] = c_en && 1'b1;
+assign carry_mask[19] = c_en && !pw_2 && !pw_4;
+assign carry_mask[20] = c_en && 1'b1;
+assign carry_mask[21] = c_en && !pw_2;
+assign carry_mask[22] = c_en && 1'b1;
+assign carry_mask[23] = c_en && !pw_2 && !pw_4 && !pw_8;
+assign carry_mask[24] = c_en && 1'b1;
+assign carry_mask[25] = c_en && !pw_2;
+assign carry_mask[26] = c_en && 1'b1;
+assign carry_mask[27] = c_en && !pw_2 && !pw_4;
+assign carry_mask[28] = c_en && 1'b1;
+assign carry_mask[29] = c_en && !pw_2;
+assign carry_mask[30] = c_en && 1'b1;
+assign carry_mask[31] = c_en && !pw_2 && !pw_4 && !pw_8 && !pw_16;
 
 //
 // Generate full adders, where carry in for each one is masked by
