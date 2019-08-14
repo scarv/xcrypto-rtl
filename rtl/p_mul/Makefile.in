@@ -2,7 +2,8 @@
 P_MUL_RTL   = rtl/p_mul/p_mul.v \
               rtl/p_addsub/p_addsub.v \
               rtl/p_shfrot/p_shfrot.v
-P_MUL_SIM   = rtl/p_mul/p_mul_tb.v
+P_MUL_SIM   = rtl/p_mul/p_mul_tb.v \
+              rtl/p_mul/p_mul_checker.v
 P_MUL_VERIF = rtl/p_mul/p_mul_ftb.v
 
 $(eval $(call add_targets,$(P_MUL_RTL),$(P_MUL_VERIF),p_mul))
