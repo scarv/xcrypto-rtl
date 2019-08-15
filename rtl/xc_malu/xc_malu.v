@@ -127,13 +127,16 @@ wire [31:0] pmul_result_1     = {32{pw_16}} & pmul_result_1_16 |
 
 
 wire [31:0] adder_lhs   = {32{insn_mul  }} &  mul_padd_lhs  |
-                          {32{insn_pmul }} & pmul_padd_lhs  ;
+                          {32{insn_pmul }} & pmul_padd_lhs  |
+                          {32{insn_drem }} & drem_padd_lhs  ;
 
 wire [31:0] adder_rhs   = {32{insn_mul  }} &  mul_padd_rhs  |
-                          {32{insn_pmul }} & pmul_padd_rhs  ;
+                          {32{insn_pmul }} & pmul_padd_rhs  |
+                          {32{insn_drem }} & drem_padd_rhs  ;
 
 wire        adder_cin   =     insn_mul    &&  mul_padd_sub  ||
-                              insn_pmul   && pmul_padd_sub  ;
+                              insn_pmul   && pmul_padd_sub  ||
+                              insn_drem   && drem_padd_sub  ;
 
 wire        adder_c_en  = !carryless;
 
@@ -191,8 +194,8 @@ always @(posedge clock) begin
         accumulator <= 64'b0;
         argument    <= 32'b0;
     end else if(valid && !count_en) begin
-        accumulator <= insn_div || insn_rem ? rs1 : 0;
-        argument    <= rs2  ;
+        accumulator <= insn_div || insn_rem ? n_accumulator : 0     ;
+        argument    <= insn_div || insn_rem ? n_argument    : rs2   ;
     end else if(count_en && !ready) begin
         counter     <= n_counter    ;
         carry       <= n_carry      ;
@@ -271,8 +274,8 @@ xc_malu_divrem i_malu_divrem (
 .padd_lhs       (drem_padd_lhs        ), // Left hand input
 .padd_rhs       (drem_padd_rhs        ), // Right hand input.
 .padd_sub       (drem_padd_sub        ), // Subtract if set, else add.
-.padd_carry     (padd_carry             ), // Carry bits
-.padd_result    (padd_result            ), // Result of the operation
+.padd_carry     (adder_cout           ), // Carry bits
+.padd_result    (adder_result         ), // Result of the operation
 .n_counter      (drem_n_counter       ),
 .n_accumulator  (drem_n_accumulator   ),
 .n_argument     (drem_n_argument      ),
@@ -625,8 +628,8 @@ output wire [31:0]  padd_lhs        , // Left hand input
 output wire [31:0]  padd_rhs        , // Right hand input.
 output wire [ 0:0]  padd_sub        , // Subtract if set, else add.
 
-input       [31:0]  padd_carry      , // Carry bits
-input       [31:0]  padd_result     , // Result of the operation
+input  wire [31:0]  padd_carry      , // Carry bits
+input  wire [31:0]  padd_result     , // Result of the operation
 
 output wire [ 5:0]  n_counter       ,
 output wire [63:0]  n_accumulator   ,
@@ -646,13 +649,11 @@ wire        i_remu      = rem &&  op_unsigned && valid;
 wire        r_div       = i_div || i_divu;
 wire        r_rem       = i_rem || i_remu;
 
-assign      n_counter   = 0;
-assign      n_accumulator= 0;
-assign      n_argument  = 0;
+assign      n_counter   = counter + 1;
+assign      n_carry     = 0;
 
 reg         div_run     ;
 reg         div_done    ;
-reg [4:0]   div_count   ;
 
 assign      finished = div_done;
 
@@ -661,28 +662,36 @@ wire        signed_lhs  = (i_div || i_rem) && rs1[31];
 wire        signed_rhs  = (i_div || i_rem) && rs2[31];
 
 wire        div_start   = is_divrem && !div_run && !div_done;
-wire        div_finished= (div_run && div_count == 0) || div_done;
+wire        div_finished= (div_run && counter== 31) || div_done;
 
 reg  [31:0] quotient    ;
-reg  [31:0] dividend    ;
-reg  [62:0] divisor     ;
 reg         outsign     ;
 
-wire [31:0] qmask       = 32'b1           << div_count;
+wire [31:0] qmask       = (32'b1<<31  )     >> counter  ;
 
-wire        div_less    = divisor <= {31'b0,dividend};
+wire        div_less    = accumulator <= {31'b0,argument};
+
+assign      padd_lhs    = argument;
+assign      padd_rhs    = accumulator[31:0];
+assign      padd_sub    = 1'b1;
 
 wire [63:0] divisor_start = 
     {(signed_rhs ? -{{32{rs2[31]}},rs2} : {32'b0,rs2}), 31'b0};
+
+
+assign      n_accumulator = div_start       ? divisor_start :
+                            !div_finished   ? accumulator >> 1  :
+                                              accumulator ;
+
+assign      n_argument    = div_start       ? (signed_lhs ? -rs1 : rs1) :
+                            div_less        ? padd_result               :
+                                              argument                  ;
 
 always @(posedge clock) begin
     if(!resetn   || flush) begin
         
         div_done <= 1'b0;
         div_run  <= 1'b0;
-        div_count<= 31;
-        dividend <= 0;
-        divisor  <= 0;
         quotient <= 0;
         outsign  <= 1'b0;
 
@@ -692,11 +701,8 @@ always @(posedge clock) begin
 
     end else if(div_start) begin
         
-        div_count<= 31;
         div_run  <= 1'b1;
         div_done <= 1'b0;
-        dividend <= signed_lhs ? -rs1 : rs1;
-        divisor  <= divisor_start;
         quotient <= 0;
         outsign  <= (i_div && (rs1[31] != rs2[31]) && |rs2) ||
                     (i_rem && rs1[31]);
@@ -705,7 +711,6 @@ always @(posedge clock) begin
 
         if(div_less) begin
         
-            dividend <= dividend - divisor[31:0];
             quotient <= quotient | qmask  ;
 
         end
@@ -714,11 +719,6 @@ always @(posedge clock) begin
 
             div_run  <= 1'b0;
             div_done <= 1'b1;
-
-        end else begin
-        
-            div_count <= div_count - 1;
-            divisor   <= divisor >> 1;
 
         end
 
@@ -730,7 +730,7 @@ end
 // Result multiplexing
 //
 
-wire [31:0] dividend_out = outsign ? -dividend : dividend;
+wire [31:0] dividend_out = outsign ? -argument : argument;
 wire [31:0] quotient_out = outsign ? -quotient : quotient;
 
 `ifdef RISCV_FORMAL_ALTOPS
