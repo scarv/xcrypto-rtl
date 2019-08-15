@@ -38,7 +38,8 @@ wire [ 4:0]  pw = insn_pmul ? {            // Pack width to operate on
     pw_single == 3'd4
 } : 5'b1;
 reg          lhs_sign        ; // MULHSU variant.
-reg          rhs_sign        ; // Unsigned instruction variant.
+reg          rhs_sign        ; // Unsigned instruction variant (MUL).
+reg          drem_unsigned   ; // Unsigned div/rem variant.
 reg          carryless_r     ; // Do carryless [p]mul.
 wire         carryless = carryless_r && (insn_mul || insn_pmul);
 wire [31:0]  result_1        ; // High 32 bits of result.
@@ -75,21 +76,21 @@ always @(posedge clock) begin
     // Randomise inputs.
     if(!valid || (valid && ready)) begin
         
-        rs1             <= ($random & 32'h0000FFFF);
-        rs2             <= ($random & 32'h0000FFFF);
-        rs3             <= ($random & 32'h0000FFFF);
+        rs1             <= ($random & 32'h0000000F);
+        rs2             <= ($random & 32'h0000000F);
+        rs3             <= ($random & 32'h0000000F);
         
-        insn_mul        <= 1'b1;
-        insn_pmul       <= 1'b0;
-        insn_div        <= 1'b0; // Variant of divide
-        insn_rem        <= 1'b0; // Variant of remainder
+        insn_mul        <= 1'b0; // 32-bit multiply (signed / unsigned)
+        insn_pmul       <= 1'b0; // packed multiply
+        insn_div        <= 1'b0; // divide
+        insn_rem        <= 1'b1; // remainder
         insn_macc       <= 1'b0; // Accumulate
         insn_madd       <= 1'b0; // Add 3
         insn_msub       <= 1'b0; // Subtract 3
 
         lhs_sign        <= $random;
         rhs_sign        <= $random;
-        
+        drem_unsigned   <= $random;
         pw_single       <= $random % 4;
         carryless_r     <= $random;
 
@@ -157,6 +158,22 @@ always @(posedge clock) begin
             end
         end else if(insn_pmul) begin
             expected = {pmul_result_hi, pmul_result_lo};
+        end else if(insn_div) begin
+            if(rs2 == 0) begin
+                expected = (-1) & 32'hFFFFFFFF;
+            end else if(drem_unsigned) begin
+                expected = $unsigned(rs1) / $unsigned(rs2);
+            end else begin
+                expected = $signed(rs1) / $signed(rs2);
+            end
+        end else if(insn_rem) begin
+            if(rs2 == 0) begin
+                expected = rs1;
+            end else if(drem_unsigned) begin
+                expected = $unsigned(rs1) % $unsigned(rs2);
+            end else begin
+                expected = $signed(rs1) % $signed(rs2);
+            end
         end
 
         if(expected !== {result_1, result_0}) begin
@@ -212,6 +229,7 @@ xc_malu i_dut(
 .pw              (pw              ), // Pack width to operate on
 .lhs_sign        (lhs_sign        ), // MULHSU variant.
 .rhs_sign        (rhs_sign        ), // Unsigned instruction variant.
+.drem_unsigned   (drem_unsigned   ), // Unsigned div/rem
 .carryless       (carryless       ), // Do carryless [p]mul.
 .result_1        (result_1        ), // High 32 bits of result.
 .result_0        (result_0        )  // Low 32-bits of result.
