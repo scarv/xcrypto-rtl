@@ -51,7 +51,6 @@ wire pw_2  = pw[4];
 wire [31:0]  mul_padd_lhs       ; // Left hand input
 wire [31:0]  mul_padd_rhs       ; // Right hand input.
 wire [ 0:0]  mul_padd_sub       ; // Subtract if set, else add.
-wire [ 5:0]  mul_n_counter      ;
 wire [63:0]  mul_n_accumulator  ;
 wire [32:0]  mul_n_argument     ;
 wire         mul_n_carry        ;
@@ -64,7 +63,6 @@ wire [31:0]  drem_padd_rhs     ; // Right hand input.
 wire [ 0:0]  drem_padd_sub     ; // Subtract if set, else add.
 wire [31:0]  drem_padd_carry   ; // Carry bits
 wire [31:0]  drem_padd_result  ; // Result of the operation
-wire [ 5:0]  drem_n_counter    ;
 wire [63:0]  drem_n_accumulator;
 wire [32:0]  drem_n_argument   ;
 wire         drem_n_carry      ;
@@ -74,7 +72,6 @@ wire [31:0]  drem_result       ;
 wire [31:0]  pmul_padd_lhs      ; // Left hand input
 wire [31:0]  pmul_padd_rhs      ; // Right hand input.
 wire [ 0:0]  pmul_padd_sub      ; // Subtract if set, else add.
-wire [ 5:0]  pmul_n_counter     ;
 wire [63:0]  pmul_n_accumulator ;
 wire [32:0]  pmul_n_argument    ;
 wire         pmul_n_carry       ;
@@ -152,9 +149,7 @@ reg         carry           ;
 reg  [63:0] accumulator     ;
 reg  [31:0] argument        ;
 
-wire [ 5:0] n_counter       = {64{insn_mul }} &  mul_n_counter      |
-                              {64{insn_pmul}} & pmul_n_counter      |
-                              {64{insn_drem}} & drem_n_counter      ;
+wire [ 5:0] n_counter       = counter + 1;
 
 wire        n_carry         =     insn_mul   &&  mul_n_carry        |
                                   insn_pmul  && pmul_n_carry        |
@@ -164,9 +159,9 @@ wire [63:0] n_accumulator   = {64{insn_mul }} &  mul_n_accumulator  |
                               {64{insn_pmul}} & pmul_n_accumulator  |
                               {64{insn_drem}} & drem_n_accumulator  ;
 
-wire [31:0] n_argument      = {64{insn_mul }} &  mul_n_argument     |
-                              {64{insn_pmul}} & pmul_n_argument     |
-                              {64{insn_drem}} & drem_n_argument     ;
+wire [31:0] n_argument      = {32{insn_mul }} &  mul_n_argument     |
+                              {32{insn_pmul}} & pmul_n_argument     |
+                              {32{insn_drem}} & drem_n_argument     ;
 
 assign      ready           = insn_mul  &&  mul_finished    ||
                               insn_pmul && pmul_finished    ||
@@ -224,7 +219,7 @@ xc_malu_mul i_malu_mul (
 .padd_sub        (mul_padd_sub      ), // Subtract if set, else add.
 .padd_carry      (adder_cout        ), // Carry bits
 .padd_result     (adder_result      ), // Result of the operation
-.n_counter       (mul_n_counter     ),
+.n_counter       (n_counter         ),
 .n_accumulator   (mul_n_accumulator ),
 .n_argument      (mul_n_argument    ),
 .n_carry         (mul_n_carry       ),
@@ -247,7 +242,7 @@ xc_malu_pmul i_malu_pmul (
 .padd_sub        (pmul_padd_sub     ), // Subtract if set, else add.
 .padd_carry      (adder_cout        ), // Carry bits
 .padd_result     (adder_result      ), // Result of the operation
-.n_counter       (pmul_n_counter    ),
+.n_counter       (n_counter         ),
 .n_accumulator   (pmul_n_accumulator),
 .n_argument      (pmul_n_argument   ),
 .n_carry         (pmul_n_carry      ),
@@ -276,7 +271,7 @@ xc_malu_divrem i_malu_divrem (
 .padd_sub       (drem_padd_sub        ), // Subtract if set, else add.
 .padd_carry     (adder_cout           ), // Carry bits
 .padd_result    (adder_result         ), // Result of the operation
-.n_counter      (drem_n_counter       ),
+.n_counter      (n_counter            ),
 .n_accumulator  (drem_n_accumulator   ),
 .n_argument     (drem_n_argument      ),
 .n_carry        (drem_n_carry         ),
@@ -328,15 +323,13 @@ output wire [ 0:0]  padd_sub        , // Subtract if set, else add.
 input       [31:0]  padd_carry      , // Carry bits
 input       [31:0]  padd_result     , // Result of the operation
 
-output wire [ 5:0]  n_counter       ,
+input  wire [ 5:0]  n_counter       ,
 output wire [63:0]  n_accumulator   ,
 output wire [32:0]  n_argument      ,
 output wire         n_carry         ,
 output wire         finished        
 
 );
-
-assign n_counter = counter + 1;
 
 assign finished  = counter == 32;
 
@@ -395,7 +388,7 @@ output wire [ 0:0]  padd_sub        , // Subtract if set, else add.
 input       [31:0]  padd_carry      , // Carry bits
 input       [31:0]  padd_result     , // Result of the operation
 
-output wire [ 5:0]  n_counter       ,
+input  wire [ 5:0]  n_counter       ,
 output wire [63:0]  n_accumulator   ,
 output wire [32:0]  n_argument      ,
 output wire         n_carry         ,
@@ -412,7 +405,6 @@ wire pw_2  = pw[4];
 
 wire [5:0] counter_finish = {pw_16,pw_8,pw_4,pw_2,1'b0};
 
-assign n_counter    = counter + 1;
 assign n_carry      = 1'b0;
 assign n_argument   = {1'b0, argument[31:1]};
 
@@ -631,7 +623,7 @@ output wire [ 0:0]  padd_sub        , // Subtract if set, else add.
 input  wire [31:0]  padd_carry      , // Carry bits
 input  wire [31:0]  padd_result     , // Result of the operation
 
-output wire [ 5:0]  n_counter       ,
+input  wire [ 5:0]  n_counter       ,
 output wire [63:0]  n_accumulator   ,
 output wire [32:0]  n_argument      ,
 output wire         n_carry         ,
@@ -649,7 +641,6 @@ wire        i_remu      = rem &&  op_unsigned && valid;
 wire        r_div       = i_div || i_divu;
 wire        r_rem       = i_rem || i_remu;
 
-assign      n_counter   = counter + 1;
 assign      n_carry     = 0;
 
 reg         div_run     ;
@@ -669,7 +660,7 @@ reg         outsign     ;
 
 wire [31:0] qmask       = (32'b1<<31  )     >> counter  ;
 
-wire        div_less    = accumulator <= {31'b0,argument};
+wire        div_less    = accumulator <= {32'b0,argument};
 
 assign      padd_lhs    = argument;
 assign      padd_rhs    = accumulator[31:0];

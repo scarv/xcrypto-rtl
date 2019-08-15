@@ -37,8 +37,10 @@ wire [ 4:0]  pw = insn_pmul ? {            // Pack width to operate on
     pw_single == 3'd3,
     pw_single == 3'd4
 } : 5'b1;
-reg          lhs_sign        ; // MULHSU variant.
-reg          rhs_sign        ; // Unsigned instruction variant (MUL).
+reg          lhs_sign_r      ; // MULHSU variant.
+reg          rhs_sign_r      ; // Unsigned instruction variant (MUL).
+wire         lhs_sign = lhs_sign_r && !carryless       ; //
+wire         rhs_sign = rhs_sign_r && !carryless       ; //
 reg          drem_unsigned   ; // Unsigned div/rem variant.
 reg          carryless_r     ; // Do carryless [p]mul.
 wire         carryless = carryless_r && (insn_mul || insn_pmul);
@@ -88,8 +90,8 @@ always @(posedge clock) begin
         insn_madd       <= 1'b0; // Add 3
         insn_msub       <= 1'b0; // Subtract 3
 
-        lhs_sign        <= $random;
-        rhs_sign        <= $random;
+        lhs_sign_r      <= $random;
+        rhs_sign_r      <= $random;
         drem_unsigned   <= $random;
         pw_single       <= $random % 4;
         carryless_r     <= $random;
