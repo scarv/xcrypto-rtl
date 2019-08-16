@@ -55,7 +55,8 @@ input  wire [31:0]  rs3             , //
 input  wire         flush           , // Flush state / pipeline progress
 input  wire         valid           , // Inputs valid.
 
-input  wire         uop_drem        , //
+input  wire         uop_div         , //
+input  wire         uop_rem         , //
 input  wire         uop_mul         , //
 input  wire         uop_madd        , //
 input  wire         uop_msub_1      , //
@@ -72,9 +73,7 @@ input  wire         pw_8            , // 32-bit width packed elements.
 input  wire         pw_4            , // 32-bit width packed elements.
 input  wire         pw_2            , // 32-bit width packed elements.
 
-output wire [63:0]  result_mul      , // 64-bit multiply result
-output wire [31:0]  result_div_q    , // 32-bit division quotient
-output wire [31:0]  result_div_r    , // 32-bit division remainder
+output wire [63:0]  result          , // 64-bit multiply result
 
 output wire         ready             // Outputs ready.
 
@@ -85,6 +84,8 @@ output wire         ready             // Outputs ready.
 // Submodule interface wires
 // -----------------------------------------------------------------
 
+wire         uop_drem   = uop_div || uop_rem;
+
 wire [31:0]  divrem_padd_lhs        ; // Left hand input
 wire [31:0]  divrem_padd_rhs        ; // Right hand input.
 wire [ 0:0]  divrem_padd_sub        ; // Subtract if set, else add.
@@ -93,8 +94,16 @@ wire [31:0]  divrem_n_arg0          ;
 wire [31:0]  divrem_n_arg1          ;
 wire         divrem_ready           ;
 
-wire         div_outsign            = (rs1[31] != rs2[31]) && |rs2;
-wire         rem_outsign            = (rs1[31]           )        ;
+wire         div_outsign  = (mod_lh_sign && (rs1[31] != rs2[31]) && |rs2);
+wire         rem_outsign  = (mod_lh_sign && rs1[31]);
+
+wire [31:0]  neg_arg      = -(uop_div   ? arg1  : arg0);
+
+wire [31:0]  result_div_r = rem_outsign ? neg_arg : arg0;
+wire [31:0]  result_div_q = div_outsign ? neg_arg : arg1;
+
+assign       result       = {64{uop_div}} & {32'b0, result_div_q} |
+                            {64{uop_rem}} & {32'b0, result_div_r} ;
 
 //
 // Packed Adder Interface
@@ -201,18 +210,16 @@ xc_malu_divrem i_malu_divrem(
 .flush           (flush                 ),
 .counter         (count                 ),
 .accumulator     (acc                   ), // divisor
-.argument        (arg0                  ), // dividend
-//.arg1            (arg1                  ), // quotient
+.arg0            (arg0                  ), // dividend
+.arg1            (arg1                  ), // quotient
 .padd_lhs        (divrem_padd_lhs       ), // Left hand input
 .padd_rhs        (divrem_padd_rhs       ), // Right hand input.
 .padd_sub        (divrem_padd_sub       ), // Subtract if set, else add.
 .padd_carry      (padd_cout             ), // Carry bits
 .padd_result     (padd_result           ), // Result of the operation
 .n_accumulator   (divrem_n_accumulator  ),
-.n_argument      (divrem_n_arg0         ),
-//.n_arg1          (divrem_n_arg1         ),
-.dividend_out    (result_div_r          ),
-.quotient_out    (result_div_q          ),
+.n_arg0          (divrem_n_arg0         ),
+.n_arg1          (divrem_n_arg1         ),
 .finished        (divrem_ready          ) 
 );
 

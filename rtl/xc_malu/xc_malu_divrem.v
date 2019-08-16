@@ -11,8 +11,9 @@ input  wire         op_signed       ,
 input  wire         flush           ,
 
 input  wire [ 5:0]  counter         ,
-input  wire [63:0]  accumulator     ,
-input  wire [31:0]  argument        ,
+input  wire [63:0]  accumulator     , // Divisor
+input  wire [31:0]  arg0            , // Dividend
+input  wire [31:0]  arg1            , // Quotient
 
 output wire [31:0]  padd_lhs        , // Left hand input
 output wire [31:0]  padd_rhs        , // Right hand input.
@@ -21,12 +22,10 @@ output wire [ 0:0]  padd_sub        , // Subtract if set, else add.
 input  wire [31:0]  padd_carry      , // Carry bits
 input  wire [31:0]  padd_result     , // Result of the operation
 
-input  wire [ 5:0]  n_counter       ,
 output wire [63:0]  n_accumulator   ,
-output wire [32:0]  n_argument      ,
-output wire         finished        ,
-output wire [31:0]  dividend_out    ,
-output wire [31:0]  quotient_out     
+output wire [31:0]  n_arg0          ,
+output wire [31:0]  n_arg1          ,
+output wire         finished        
 
 );
 
@@ -41,39 +40,37 @@ wire        signed_rhs  = (op_signed) && rs2[31];
 wire        div_start   = valid     && !div_run && !div_done;
 wire        div_finished= (div_run && counter== 31) || div_done;
 
-reg  [31:0] quotient    ;
-
-reg         outsign_div ;
-reg         outsign_rem ;
-
 wire [31:0] qmask       = (32'b1<<31  )     >> counter  ;
 
-wire        div_less    = accumulator <= {32'b0,argument};
+wire        div_less    = accumulator <= {32'b0,arg0};
 
-assign      padd_lhs    = argument;
+assign      padd_lhs    = arg0;
 assign      padd_rhs    = accumulator[31:0];
 assign      padd_sub    = 1'b1;
 
+wire [31:0] neg_rs2     = -rs2;
+
 wire [63:0] divisor_start = 
-    {(signed_rhs ? -{{32{rs2[31]}},rs2} : {32'b0,rs2}), 31'b0};
+    {(signed_rhs ? {{32{rs2[31]}},neg_rs2} : {32'b0,rs2}), 31'b0};
 
 
 assign      n_accumulator = div_start       ? divisor_start :
                             !div_finished   ? accumulator >> 1  :
                                               accumulator ;
 
-assign      n_argument    = div_start       ? (signed_lhs ? -rs1 : rs1) :
-                            div_less        ? padd_result               :
-                                              argument                  ;
+assign      n_arg0    = div_start ? (signed_lhs ? -rs1 : rs1) :
+                        div_less  ? padd_result               :
+                                    arg0                      ;
+
+assign      n_arg1    = div_start           ? 0               :
+                        div_run && div_less ? arg1 | qmask    :
+                                              arg1            ;
 
 always @(posedge clock) begin
     if(!resetn   || flush) begin
         
         div_done <= 1'b0;
         div_run  <= 1'b0;
-        quotient <= 0;
-        outsign_div  <= 1'b0;
-        outsign_rem  <= 1'b0;
 
     end else if(div_done) begin
         
@@ -83,17 +80,8 @@ always @(posedge clock) begin
         
         div_run  <= 1'b1;
         div_done <= 1'b0;
-        quotient <= 0;
-        outsign_div <= (op_signed && (rs1[31] != rs2[31]) && |rs2);
-        outsign_rem <= (op_signed && rs1[31]);
 
     end else if(div_run) begin
-
-        if(div_less) begin
-        
-            quotient <= quotient | qmask  ;
-
-        end
 
         if(div_finished) begin
 
@@ -104,13 +92,5 @@ always @(posedge clock) begin
 
     end
 end
-
-
-//
-// Result multiplexing
-//
-
-assign dividend_out = outsign_rem ? -argument : argument;
-assign quotient_out = outsign_div ? -quotient : quotient;
 
 endmodule

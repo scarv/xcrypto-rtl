@@ -81,7 +81,8 @@ reg  [31:0]  dut_rs2             ; //
 reg  [31:0]  dut_rs3             ; //
 wire         dut_flush = dut_valid && dut_ready;
 reg          dut_valid           ; // Inputs valid.
-reg          dut_uop_drem        ; //
+reg          dut_uop_div         ; //
+reg          dut_uop_rem         ; //
 reg          dut_uop_mul         ; //
 reg          dut_uop_madd        ; //
 reg          dut_uop_msub_1      ; //
@@ -101,7 +102,8 @@ reg  [31:0]  n_dut_rs1           ; //
 reg  [31:0]  n_dut_rs2           ; //
 reg  [31:0]  n_dut_rs3           ; //
 reg          n_dut_valid         ; // Inputs valid.
-reg          n_dut_uop_drem      ; //
+reg          n_dut_uop_div       ; //
+reg          n_dut_uop_rem       ; //
 reg          n_dut_uop_mul       ; //
 reg          n_dut_uop_madd      ; //
 reg          n_dut_uop_msub_1    ; //
@@ -117,9 +119,7 @@ reg          n_dut_pw_8          ; // 32-bit width packed elements.
 reg          n_dut_pw_4          ; // 32-bit width packed elements.
 reg          n_dut_pw_2          ; // 32-bit width packed elements.
 
-wire [63:0]  dut_result_mul      ; // 64-bit multiply result
-wire [31:0]  dut_result_div_q    ; // 32-bit division quotient
-wire [31:0]  dut_result_div_r    ; // 32-bit division remainder
+wire [63:0]  dut_result          ; // 64-bit result
 wire         dut_ready           ; // Outputs ready.
 
 always @(posedge clock) begin
@@ -128,7 +128,8 @@ always @(posedge clock) begin
     dut_rs1          <= n_dut_rs1   ;
     dut_rs2          <= n_dut_rs2   ;
     dut_rs3          <= n_dut_rs3   ;
-    dut_uop_drem     <= n_dut_uop_drem      ; //
+    dut_uop_div      <= n_dut_uop_div       ; //
+    dut_uop_rem      <= n_dut_uop_rem       ; //
     dut_uop_mul      <= n_dut_uop_mul       ; //
     dut_uop_madd     <= n_dut_uop_madd      ; //
     dut_uop_msub_1   <= n_dut_uop_msub_1    ; //
@@ -167,15 +168,16 @@ always @(posedge clock) begin
         n_dut_mod_lh_sign   = 1'b0;
         n_dut_mod_rh_sign   = 1'b0;
         
-        {n_dut_uop_drem  ,
+        {n_dut_uop_div   ,
+         n_dut_uop_rem   ,
          n_dut_uop_mul   ,
          n_dut_uop_madd  ,
          n_dut_uop_msub_1,
          n_dut_uop_msub_2,
          n_dut_uop_macc_1,
-         n_dut_uop_macc_2} = (7'b1000000);// << ($random % 7));
+         n_dut_uop_macc_2} = (8'b10000000);// << ($random % 8));
 
-        if(dut_uop_drem) begin
+        if(dut_uop_div || dut_uop_rem) begin
             n_dut_mod_lh_sign   = $random;
             n_dut_mod_rh_sign   = n_dut_mod_lh_sign;
             n_dut_pw_32         = 1'b1;
@@ -188,42 +190,48 @@ always @(posedge clock) begin
 end
 
 reg [63:0] expected;
-reg [63:0] dut_result;
 reg finish; // Finish the simulation?
 
 //
 // Results checking
-always @(posedge clock) begin
+always @(posedge clock) if(resetn) begin
 
     finish = 0;
 
-    if(dut_valid && dut_ready) begin
+    if(dut_valid === 1'b1 && dut_ready === 1'b1) begin
         
-        if(dut_uop_drem) begin
+        if(dut_uop_div) begin
             if(dut_rs2 == 0) begin
-                expected[31: 0] = -1;
-                expected[63:32] = dut_rs1;
+                expected = -1;
             end else if(dut_mod_lh_sign) begin
-                expected[31: 0] = $signed(dut_rs1) / $signed(dut_rs2);
-                expected[63:32] = $signed(dut_rs1) % $signed(dut_rs2);
+                expected = $signed(dut_rs1) / $signed(dut_rs2);
             end else begin
-                expected[31: 0] = $unsigned(dut_rs1) / $unsigned(dut_rs2);
-                expected[63:32] = $unsigned(dut_rs1) % $unsigned(dut_rs2);
+                expected = $unsigned(dut_rs1) / $unsigned(dut_rs2);
             end
-            dut_result = {dut_result_div_r, dut_result_div_q};
+            expected = expected & 32'hFFFFFFFF;
+        end else if(dut_uop_rem) begin
+            if(dut_rs2 == 0) begin
+                expected = dut_rs1;
+            end else if(dut_mod_lh_sign) begin
+                expected = $signed(dut_rs1) % $signed(dut_rs2);
+            end else begin
+                expected = $unsigned(dut_rs1) % $unsigned(dut_rs2);
+            end
+            expected = expected & 32'hFFFFFFFF;
         end
         
         test_count = test_count + 1;
 
-    end
+        if(expected !== dut_result) begin
+            finish = 1;
+        end
 
-    if(expected !== dut_result) begin
-        finish = 1;
     end
     
     if(finish) begin
         $display("ERROR:");
-        $display("dut_uop_drem  : %b", dut_uop_drem  );
+        $display("dut_uop_div   : %b", dut_uop_div   );
+        $display("dut_uop_rem   : %b", dut_uop_rem   );
         $display("dut_uop_mul   : %b", dut_uop_mul   );
         $display("dut_uop_madd  : %b", dut_uop_madd  );
         $display("dut_uop_msub_1: %b", dut_uop_msub_1);
@@ -251,7 +259,8 @@ xc_malu i_dut(
 .rs3             (dut_rs3             ), //
 .flush           (dut_flush           ), // Flush state / pipeline progress
 .valid           (dut_valid           ), // Inputs valid.
-.uop_drem        (dut_uop_drem        ), //
+.uop_div         (dut_uop_div         ), //
+.uop_rem         (dut_uop_rem         ), //
 .uop_mul         (dut_uop_mul         ), //
 .uop_madd        (dut_uop_madd        ), //
 .uop_msub_1      (dut_uop_msub_1      ), //
@@ -266,9 +275,7 @@ xc_malu i_dut(
 .pw_8            (dut_pw_8            ), // 32-bit width packed elements.
 .pw_4            (dut_pw_4            ), // 32-bit width packed elements.
 .pw_2            (dut_pw_2            ), // 32-bit width packed elements.
-.result_mul      (dut_result_mul      ), // 64-bit multiply result
-.result_div_q    (dut_result_div_q    ), // 32-bit division quotient
-.result_div_r    (dut_result_div_r    ), // 32-bit division remainder
+.result          (dut_result          ), // 64-bit result
 .ready           (dut_ready           )  // Outputs ready.
 );
 
