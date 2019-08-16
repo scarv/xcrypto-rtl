@@ -72,8 +72,6 @@ function [63:0] clmul_ref;
 
 endfunction
 
-wire [63:0] clmul_ref_32 = clmul_ref(dut_rs1,dut_rs2,32);
-
 //
 // DUT I/O
 reg  [31:0]  dut_rs1             ; //
@@ -154,9 +152,9 @@ always @(posedge clock) begin
     // Generate new inputs?
     if(!dut_valid || (dut_valid && dut_ready)) begin
 
-        n_dut_rs1 = $random & 32'hFFFFFFFF;
-        n_dut_rs2 = $random & 32'hFFFFFFFF;
-        n_dut_rs3 = $random & 32'hFFFFFFFF;
+        n_dut_rs1 = $random & 32'h80000001;
+        n_dut_rs2 = $random & 32'h80000001;
+        n_dut_rs3 = $random & 32'h80000001;
 
         n_dut_pw_32 = 1'b0;
         n_dut_pw_16 = 1'b0;
@@ -175,11 +173,18 @@ always @(posedge clock) begin
          n_dut_uop_msub_1,
          n_dut_uop_msub_2,
          n_dut_uop_macc_1,
-         n_dut_uop_macc_2} = (8'b10000000);// << ($random % 8));
+         n_dut_uop_macc_2} = (8'b00100000);// << ($random % 8));
 
         if(dut_uop_div || dut_uop_rem) begin
             n_dut_mod_lh_sign   = $random;
             n_dut_mod_rh_sign   = n_dut_mod_lh_sign;
+            n_dut_pw_32         = 1'b1;
+        end else if(dut_uop_mul) begin
+            n_dut_mod_carryless = $random;
+            if(!n_dut_mod_carryless) begin
+                n_dut_mod_lh_sign   = $random;
+                n_dut_mod_rh_sign   = $random && n_dut_mod_lh_sign;
+            end
             n_dut_pw_32         = 1'b1;
         end
         
@@ -189,7 +194,6 @@ always @(posedge clock) begin
 
 end
 
-reg [63:0] expected;
 reg finish; // Finish the simulation?
 
 //
@@ -198,31 +202,11 @@ always @(posedge clock) if(resetn) begin
 
     finish = 0;
 
-    if(dut_valid === 1'b1 && dut_ready === 1'b1) begin
-        
-        if(dut_uop_div) begin
-            if(dut_rs2 == 0) begin
-                expected = -1;
-            end else if(dut_mod_lh_sign) begin
-                expected = $signed(dut_rs1) / $signed(dut_rs2);
-            end else begin
-                expected = $unsigned(dut_rs1) / $unsigned(dut_rs2);
-            end
-            expected = expected & 32'hFFFFFFFF;
-        end else if(dut_uop_rem) begin
-            if(dut_rs2 == 0) begin
-                expected = dut_rs1;
-            end else if(dut_mod_lh_sign) begin
-                expected = $signed(dut_rs1) % $signed(dut_rs2);
-            end else begin
-                expected = $unsigned(dut_rs1) % $unsigned(dut_rs2);
-            end
-            expected = expected & 32'hFFFFFFFF;
-        end
-        
+    if(dut_valid == 1'b1 && dut_ready == 1'b1) begin
+
         test_count = test_count + 1;
 
-        if(expected !== dut_result) begin
+        if(grm_result != dut_result) begin
             finish = 1;
         end
 
@@ -240,12 +224,69 @@ always @(posedge clock) if(resetn) begin
         $display("dut_uop_macc_2: %b", dut_uop_macc_2);
         $display("- LHS Sign: %d, RHS Sign: %d",dut_mod_lh_sign, dut_mod_rh_sign);
         $display("- Carryless: %d", dut_mod_carryless);
-        $display("- Expected %d = %d . %d", expected, dut_rs1, dut_rs2);
-        $display("- Expected %x = %x . %x", expected, dut_rs1, dut_rs2);
+        $display("- Expected %d = %d . %d", grm_result, dut_rs1, dut_rs2);
+        $display("- Expected %x = %x . %x", grm_result, dut_rs1, dut_rs2);
         $display("- Got      %x          ", dut_result);
-        #1 $finish;
+        $finish;
     end
 
+end
+                    
+wire [63:0] mul_ss = $signed(dut_rs1) * $signed(dut_rs2);
+wire [63:0] mul_su = $signed(dut_rs1) * $unsigned(dut_rs2);
+wire [63:0] mul_us = $unsigned(dut_rs1) * $signed(dut_rs2);
+wire [63:0] mul_uu = $unsigned(dut_rs1) * $unsigned(dut_rs2);
+
+reg [63:0] grm_result;
+       
+always @(*) begin
+
+    grm_result = 64'hDEADBEEFBEADEADD1;
+
+    if(dut_uop_div) begin
+        
+        if(dut_rs2 == 0) begin
+            grm_result = -1;
+        end else if(dut_mod_lh_sign) begin
+            grm_result = $signed(dut_rs1) / $signed(dut_rs2);
+        end else begin
+            grm_result = $unsigned(dut_rs1) / $unsigned(dut_rs2);
+        end
+
+    end else if(dut_uop_rem) begin
+        
+        if(dut_rs2 == 0) begin
+            grm_result = dut_rs1;
+        end else if(dut_mod_lh_sign) begin
+            grm_result = $signed(dut_rs1) % $signed(dut_rs2);
+        end else begin
+            grm_result = $unsigned(dut_rs1) % $unsigned(dut_rs2);
+        end
+
+    end else if(dut_uop_mul) begin
+
+        if(dut_mod_carryless && dut_pw_32) begin
+        
+            grm_result =  clmul_ref(dut_rs1,dut_rs2,32);
+
+        end else if(!dut_mod_carryless && dut_pw_32) begin
+
+            if         ( dut_mod_lh_sign &&  dut_mod_rh_sign) begin
+                grm_result = mul_ss;
+
+            end else if( dut_mod_lh_sign && !dut_mod_rh_sign) begin
+                grm_result = mul_su;
+
+            end else if(!dut_mod_lh_sign &&  dut_mod_rh_sign) begin
+                grm_result = mul_us;
+
+            end else if(!dut_mod_lh_sign && !dut_mod_rh_sign) begin
+                grm_result = mul_uu;
+
+            end
+
+        end
+    end
 end
 
 //
