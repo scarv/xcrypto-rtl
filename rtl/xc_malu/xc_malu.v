@@ -110,6 +110,13 @@ wire [63:0]  mul_n_acc           ;
 wire [32:0]  mul_n_arg0          ;
 wire         mul_finished        ;
 
+wire [31:0]  pmul_padd_lhs       ; // Left hand input
+wire [31:0]  pmul_padd_rhs       ; // Right hand input.
+wire [ 0:0]  pmul_padd_sub       ; // Subtract if set, else add.
+wire [63:0]  pmul_n_accumulator  ;
+wire [32:0]  pmul_n_argument     ;
+wire         pmul_finished       ;
+
 //
 // Result Multiplexing
 // -----------------------------------------------------------------
@@ -268,6 +275,28 @@ xc_malu_mul i_xc_malu_mul(
 .n_accumulator (mul_n_acc       ),
 .n_argument    (mul_n_arg0      ),
 .finished      (mul_finished    )
+);
+
+//
+// Handles instructions:
+//  - pmul
+//  - pmulh
+//
+xc_malu_pmul i_xc_malu_pmul(
+.rs1             (rs1               ),
+.rs2             (rs2               ),
+.counter         (count             ),
+.accumulator     (acc               ),
+.argument        (arg0              ),
+.pw              (padd_pw           ),
+.padd_lhs        (pmul_padd_lhs     ), // Left hand input
+.padd_rhs        (pmul_padd_rhs     ), // Right hand input.
+.padd_sub        (pmul_padd_sub     ), // Subtract if set, else add.
+.padd_carry      (padd_cout         ), // Carry bits
+.padd_result     (padd_result       ), // Result of the operation
+.n_accumulator   (pmul_n_accumulator),
+.n_argument      (pmul_n_argument   ),
+.finished        (pmul_finished     )
 );
 
 endmodule
