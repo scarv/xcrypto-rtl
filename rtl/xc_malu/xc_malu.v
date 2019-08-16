@@ -58,6 +58,7 @@ input  wire         valid           , // Inputs valid.
 input  wire         uop_div         , //
 input  wire         uop_rem         , //
 input  wire         uop_mul         , //
+input  wire         uop_pmul        , //
 input  wire         uop_madd        , //
 input  wire         uop_msub_1      , //
 input  wire         uop_msub_2      , //
@@ -114,6 +115,7 @@ wire [31:0]  pmul_padd_lhs       ; // Left hand input
 wire [31:0]  pmul_padd_rhs       ; // Right hand input.
 wire [ 0:0]  pmul_padd_sub       ; // Subtract if set, else add.
 wire [63:0]  pmul_n_accumulator  ;
+wire [63:0]  pmul_result         =0;
 wire [32:0]  pmul_n_argument     ;
 wire         pmul_finished       ;
 
@@ -121,19 +123,22 @@ wire         pmul_finished       ;
 // Result Multiplexing
 // -----------------------------------------------------------------
 
-assign       result       = {64{uop_div}} & {32'b0, result_div_q} |
-                            {64{uop_rem}} & {32'b0, result_div_r} |
-                            {64{uop_mul}} & {acc                } ;
+assign       result       = {64{uop_div }} & {32'b0, result_div_q} |
+                            {64{uop_rem }} & {32'b0, result_div_r} |
+                            {64{uop_mul }} & {acc                } |
+                            {64{uop_pmul}} & {pmul_result        } ;
 
 //
 // Packed Adder Interface
 // -----------------------------------------------------------------
 
 wire [31:0] padd_lhs = {32{uop_drem}} & divrem_padd_lhs |
-                       {32{uop_mul }} & mul_padd_lhs    ;
+                       {32{uop_mul }} & mul_padd_lhs    |
+                       {32{uop_pmul}} & pmul_padd_lhs   ;
 
 wire [31:0] padd_rhs = {32{uop_drem}} & divrem_padd_rhs |
-                       {32{uop_mul }} & mul_padd_rhs    ;
+                       {32{uop_mul }} & mul_padd_rhs    |
+                       {32{uop_pmul}} & pmul_padd_rhs   ;
 
 wire        padd_sub =     uop_drem  && divrem_padd_sub ||
                            uop_mul   && mul_padd_sub    ;
@@ -141,7 +146,8 @@ wire        padd_sub =     uop_drem  && divrem_padd_sub ||
 wire        padd_cin =     uop_drem  && 1'b1            ;
 
 wire        padd_cen =     uop_drem                     ||
-                           uop_mul   && !mod_carryless  ;
+                           uop_mul   && !mod_carryless  ||
+                           uop_pmul                     ;
 
 wire [ 4:0] padd_pw = {pw_2, pw_4, pw_8, pw_16, pw_32};
 
@@ -168,11 +174,13 @@ wire [ 5:0] n_count = count + 1;
 reg  [63:0] acc      ;   // Accumulator
 
 wire [63:0] n_acc    = {64{uop_drem}} & divrem_n_accumulator    |
-                       {64{uop_mul }} & mul_n_acc               ;
+                       {64{uop_mul }} & mul_n_acc               |
+                       {64{uop_pmul}} & pmul_n_accumulator      ;
                      
 reg  [31:0] arg0     ;   // Misc intermediate variable
 wire [31:0] n_arg0   = {32{uop_drem}} & divrem_n_arg0           |
-                       {32{uop_mul }} & mul_n_arg0              ;
+                       {32{uop_mul }} & mul_n_arg0              |
+                       {32{uop_pmul}} & pmul_n_argument         ;
                      
 reg  [31:0] arg1     ;   // Misc intermediate variable
 wire [31:0] n_arg1   =                  divrem_n_arg1           ;
@@ -199,7 +207,8 @@ end
 // -----------------------------------------------------------------
 
 assign ready = uop_drem && divrem_ready ||
-               uop_mul  && mul_finished ;
+               uop_mul  && mul_finished ||
+               uop_pmul && pmul_finished;
 
 //
 // Submodule instances.

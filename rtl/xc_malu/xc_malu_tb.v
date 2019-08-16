@@ -82,6 +82,7 @@ reg          dut_valid           ; // Inputs valid.
 reg          dut_uop_div         ; //
 reg          dut_uop_rem         ; //
 reg          dut_uop_mul         ; //
+reg          dut_uop_pmul        ; //
 reg          dut_uop_madd        ; //
 reg          dut_uop_msub_1      ; //
 reg          dut_uop_msub_2      ; //
@@ -103,6 +104,7 @@ reg          n_dut_valid         ; // Inputs valid.
 reg          n_dut_uop_div       ; //
 reg          n_dut_uop_rem       ; //
 reg          n_dut_uop_mul       ; //
+reg          n_dut_uop_pmul      ; //
 reg          n_dut_uop_madd      ; //
 reg          n_dut_uop_msub_1    ; //
 reg          n_dut_uop_msub_2    ; //
@@ -129,6 +131,7 @@ always @(posedge clock) begin
     dut_uop_div      <= n_dut_uop_div       ; //
     dut_uop_rem      <= n_dut_uop_rem       ; //
     dut_uop_mul      <= n_dut_uop_mul       ; //
+    dut_uop_pmul     <= n_dut_uop_pmul      ; //
     dut_uop_madd     <= n_dut_uop_madd      ; //
     dut_uop_msub_1   <= n_dut_uop_msub_1    ; //
     dut_uop_msub_2   <= n_dut_uop_msub_2    ; //
@@ -169,11 +172,12 @@ always @(posedge clock) begin
         {n_dut_uop_div   ,
          n_dut_uop_rem   ,
          n_dut_uop_mul   ,
+         n_dut_uop_pmul  ,
          n_dut_uop_madd  ,
          n_dut_uop_msub_1,
          n_dut_uop_msub_2,
          n_dut_uop_macc_1,
-         n_dut_uop_macc_2} = (8'b00100000);// << ($random % 8));
+         n_dut_uop_macc_2} = (9'b000100000);// << ($random % 9));
 
         if(dut_uop_div || dut_uop_rem) begin
             n_dut_mod_lh_sign   = $random;
@@ -186,6 +190,15 @@ always @(posedge clock) begin
                 n_dut_mod_rh_sign   = $random && n_dut_mod_lh_sign;
             end
             n_dut_pw_32         = 1'b1;
+        end else if(dut_uop_pmul) begin
+            n_dut_mod_carryless = $random;
+            n_dut_mod_lh_sign   = 0;
+            n_dut_mod_rh_sign   = 0;
+            {n_dut_pw_32,
+             n_dut_pw_16,
+             n_dut_pw_8 ,
+             n_dut_pw_4 ,
+             n_dut_pw_2 } = 5'b1 << ($random % 4);
         end
         
         n_dut_valid = $random && resetn;
@@ -217,6 +230,7 @@ always @(posedge clock) if(resetn) begin
         $display("dut_uop_div   : %b", dut_uop_div   );
         $display("dut_uop_rem   : %b", dut_uop_rem   );
         $display("dut_uop_mul   : %b", dut_uop_mul   );
+        $display("dut_uop_pmul  : %b", dut_uop_pmul  );
         $display("dut_uop_madd  : %b", dut_uop_madd  );
         $display("dut_uop_msub_1: %b", dut_uop_msub_1);
         $display("dut_uop_msub_2: %b", dut_uop_msub_2);
@@ -303,6 +317,7 @@ xc_malu i_dut(
 .uop_div         (dut_uop_div         ), //
 .uop_rem         (dut_uop_rem         ), //
 .uop_mul         (dut_uop_mul         ), //
+.uop_pmul        (dut_uop_pmul        ), //
 .uop_madd        (dut_uop_madd        ), //
 .uop_msub_1      (dut_uop_msub_1      ), //
 .uop_msub_2      (dut_uop_msub_2      ), //
