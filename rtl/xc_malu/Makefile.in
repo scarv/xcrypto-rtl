@@ -1,5 +1,6 @@
 
 XC_MALU_RTL   = rtl/xc_malu/xc_malu.v \
+                rtl/xc_malu/xc_malu_divrem.v \
                 rtl/p_addsub/p_addsub.v  
 XC_MALU_SIM   = rtl/xc_malu/xc_malu_tb.v \
                 rtl/p_mul/p_mul_checker.v

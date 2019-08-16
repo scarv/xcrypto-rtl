@@ -14,6 +14,7 @@ input reset
 reg  [31:0]  lhs     = $anyseq; // Left hand input
 reg  [31:0]  rhs     = $anyseq; // Right hand input.
 reg  [ 4:0]  pw      = $anyseq; // Pack width to operate on
+wire         cin     = 1'b0;
 reg          sub     = $anyseq; // Subtract if set, else add.
 
 wire [31:0]  carry_out  ; // Output from DUT
@@ -66,6 +67,7 @@ p_addsub i_p_addsub (
 .rhs   (rhs   ), // Right hand input.
 .pw    (pw    ), // Pack width to operate on
 .sub   (sub   ), // Subtract if set, else add.
+.cin   (cin   ), //
 .c_en  (1'b1  ), //
 .c_out (c_out ), // Carry out bits
 .result(result)  // Result of the operation

@@ -10,6 +10,7 @@ input  wire [31:0]  lhs             , // Left hand input
 input  wire [31:0]  rhs             , // Right hand input.
 
 input  wire [ 4:0]  pw              , // Pack width to operate on
+input  wire [ 0:0]  cin             , // Carry in bit.
 input  wire [ 0:0]  sub             , // Subtract if set, else add.
 
 input  wire         c_en            , // Carry enable bits.
@@ -33,8 +34,8 @@ wire [31:0] carry_mask;
 wire [32:0] carry_chain;
 /* verilator lint_on UNOPTFLAT */
 
-// Carry in IFF subtracting.
-assign      carry_chain[0] = sub;
+// Carry in IFF subtracting or forcing a carry in.
+assign      carry_chain[0] = sub || cin;
 
 // Invert RHS iff subtracting.
 wire [31:0] rhs_m          = sub ? ~rhs : rhs;
