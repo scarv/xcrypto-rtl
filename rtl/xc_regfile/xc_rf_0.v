@@ -1,7 +1,7 @@
 
 
 //
-// module: xc_rf
+// module: xc_rf_0
 //
 //  The most basic 2-read-1-write register file
 //
