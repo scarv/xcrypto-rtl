@@ -24,6 +24,10 @@ input       [31:0]  padd_result     , // Result of the operation
 
 output wire [63:0]  n_accumulator   ,
 output wire [32:0]  n_argument      ,
+
+output wire [31:0]  pmul_result_hi  ,
+output wire [31:0]  pmul_result_lo  ,
+
 output wire         finished        
 
 );
@@ -204,19 +208,53 @@ assign n_accumulator =
     {64{pw_4 }} & n_accumulator_4  |
     {64{pw_2 }} & n_accumulator_2  ;
 
-wire [31:0] result_1_16 = {accumulator[47:32],accumulator[15:0]};
 
-wire [31:0] result_1_8  = 
-{accumulator[55:48],accumulator[ 39:32],accumulator[23:16],accumulator[ 7:0]};
+wire [31:0]  pmul_result_0_16 = {accumulator[32+:16],accumulator[0 +:16]};
+wire [31:0]  pmul_result_1_16 = {accumulator[48+:16],accumulator[16+:16]};
 
-wire [31:0] result_1_4  =
-{accumulator[59:56], accumulator[51:48], accumulator[43:40], accumulator[35:32],
-accumulator[27:24], accumulator[19:16], accumulator[11: 8], accumulator[ 3: 0]};
+wire [31:0]  pmul_result_0_8  = {accumulator[48+: 8],accumulator[32+: 8],
+                                 accumulator[16+: 8],accumulator[0 +: 8]};
 
-wire [31:0] result_1_2  =
-{accumulator[61:60], accumulator[57:56], accumulator[53:52], accumulator[49:48], 
-accumulator[45:44], accumulator[41:40], accumulator[37:36], accumulator[33:32], 
-accumulator[29:28], accumulator[25:24], accumulator[21:20], accumulator[17:16], 
-accumulator[13:12], accumulator[ 9: 8], accumulator[ 5: 4], accumulator[ 1: 0]};
+wire [31:0]  pmul_result_1_8  = {accumulator[56+: 8],accumulator[40+: 8],
+                                 accumulator[24+: 8],accumulator[ 8+: 8]};
+
+wire [31:0]  pmul_result_0_4  = {accumulator[56+: 4],accumulator[48+: 4],
+                                 accumulator[40+: 4],accumulator[32+: 4],
+                                 accumulator[24+: 4],accumulator[16+: 4],
+                                 accumulator[ 8+: 4],accumulator[ 0+: 4]};
+wire [31:0]  pmul_result_1_4  = {accumulator[60+: 4],accumulator[52+: 4],
+                                 accumulator[44+: 4],accumulator[36+: 4],
+                                 accumulator[28+: 4],accumulator[20+: 4],
+                                 accumulator[12+: 4],accumulator[ 4+: 4]};
+
+wire [31:0]  pmul_result_0_2  = {accumulator[60+: 2],accumulator[56+: 2],
+                                 accumulator[52+: 2],accumulator[48+: 2],
+                                 accumulator[44+: 2],accumulator[40+: 2],
+                                 accumulator[36+: 2],accumulator[32+: 2],
+                                 accumulator[28+: 2],accumulator[24+: 2],
+                                 accumulator[20+: 2],accumulator[16+: 2],
+                                 accumulator[12+: 2],accumulator[ 8+: 2],
+                                 accumulator[ 4+: 2],accumulator[ 0+: 2]};
+wire [31:0]  pmul_result_1_2  = {accumulator[62+: 2],accumulator[58+: 2],
+                                 accumulator[54+: 2],accumulator[50+: 2],
+                                 accumulator[46+: 2],accumulator[42+: 2],
+                                 accumulator[38+: 2],accumulator[34+: 2],
+                                 accumulator[30+: 2],accumulator[26+: 2],
+                                 accumulator[22+: 2],accumulator[18+: 2],
+                                 accumulator[14+: 2],accumulator[10+: 2],
+                                 accumulator[ 6+: 2],accumulator[ 2+: 2]};
+
+wire [31:0] pmul_result_0     = {32{pw_16}} & pmul_result_0_16 |
+                                {32{pw_8 }} & pmul_result_0_8  |
+                                {32{pw_4 }} & pmul_result_0_4  |
+                                {32{pw_2 }} & pmul_result_0_2  ;
+
+wire [31:0] pmul_result_1     = {32{pw_16}} & pmul_result_1_16 |
+                                {32{pw_8 }} & pmul_result_1_8  |
+                                {32{pw_4 }} & pmul_result_1_4  |
+                                {32{pw_2 }} & pmul_result_1_2  ;
+
+assign pmul_result_hi = pmul_result_1;
+assign pmul_result_lo = pmul_result_0;
 
 endmodule

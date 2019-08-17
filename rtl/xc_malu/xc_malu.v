@@ -115,7 +115,9 @@ wire [31:0]  pmul_padd_lhs       ; // Left hand input
 wire [31:0]  pmul_padd_rhs       ; // Right hand input.
 wire [ 0:0]  pmul_padd_sub       ; // Subtract if set, else add.
 wire [63:0]  pmul_n_accumulator  ;
-wire [63:0]  pmul_result         =0;
+wire [31:0]  pmul_result_hi      ;
+wire [31:0]  pmul_result_lo      ;
+wire [63:0]  pmul_result         = {pmul_result_hi, pmul_result_lo};
 wire [32:0]  pmul_n_argument     ;
 wire         pmul_finished       ;
 
@@ -147,7 +149,7 @@ wire        padd_cin =     uop_drem  && 1'b1            ;
 
 wire        padd_cen =     uop_drem                     ||
                            uop_mul   && !mod_carryless  ||
-                           uop_pmul                     ;
+                           uop_pmul  && !mod_carryless  ;
 
 wire [ 4:0] padd_pw = {pw_2, pw_4, pw_8, pw_16, pw_32};
 
@@ -206,9 +208,11 @@ end
 // Are we finished yet?
 // -----------------------------------------------------------------
 
-assign ready = uop_drem && divrem_ready ||
-               uop_mul  && mul_finished ||
-               uop_pmul && pmul_finished;
+assign ready = valid && (
+    uop_drem && divrem_ready ||
+    uop_mul  && mul_finished ||
+    uop_pmul && pmul_finished 
+);
 
 //
 // Submodule instances.
@@ -305,6 +309,8 @@ xc_malu_pmul i_xc_malu_pmul(
 .padd_result     (padd_result       ), // Result of the operation
 .n_accumulator   (pmul_n_accumulator),
 .n_argument      (pmul_n_argument   ),
+.pmul_result_hi  (pmul_result_hi    ),
+.pmul_result_lo  (pmul_result_lo    ),
 .finished        (pmul_finished     )
 );
 

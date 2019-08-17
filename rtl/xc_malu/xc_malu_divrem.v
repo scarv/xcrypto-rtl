@@ -48,10 +48,8 @@ assign      padd_lhs    = arg0;
 assign      padd_rhs    = accumulator[31:0];
 assign      padd_sub    = 1'b1;
 
-wire [31:0] neg_rs2     = -rs2;
-
 wire [63:0] divisor_start = 
-    {(signed_rhs ? {{32{rs2[31]}},neg_rs2} : {32'b0,rs2}), 31'b0};
+    {(signed_rhs ? -{{32{rs2[31]}},rs2} : {32'b0,rs2}), 31'b0};
 
 
 assign      n_accumulator = div_start       ? divisor_start :

@@ -19,13 +19,13 @@ reg          resetn          ;
 
 integer     test_count   = 0;
 integer     clock_ticks  = 0;
-parameter   max_ticks    = 10000;
+parameter   max_ticks    = 100000;
 
 // Initial values
 initial begin
 
-    $dumpfile(`STR(`WAVE_FILE));
-    $dumpvars(0, xc_malu_tb);
+    //$dumpfile(`STR(`WAVE_FILE));
+    //$dumpvars(0, xc_malu_tb);
 
     resetn  = 1'b0;
     clock   = 1'b0;
@@ -97,32 +97,35 @@ reg          dut_pw_8            ; // 32-bit width packed elements.
 reg          dut_pw_4            ; // 32-bit width packed elements.
 reg          dut_pw_2            ; // 32-bit width packed elements.
 
+reg integer n_dut_uop;
+reg integer n_dut_pw;
+
 reg  [31:0]  n_dut_rs1           ; //
 reg  [31:0]  n_dut_rs2           ; //
 reg  [31:0]  n_dut_rs3           ; //
 reg          n_dut_valid         ; // Inputs valid.
-reg          n_dut_uop_div       ; //
-reg          n_dut_uop_rem       ; //
-reg          n_dut_uop_mul       ; //
-reg          n_dut_uop_pmul      ; //
-reg          n_dut_uop_madd      ; //
-reg          n_dut_uop_msub_1    ; //
-reg          n_dut_uop_msub_2    ; //
-reg          n_dut_uop_macc_1    ; //
-reg          n_dut_uop_macc_2    ; //
+wire         n_dut_uop_div       = n_dut_uop == 0; //
+wire         n_dut_uop_rem       = n_dut_uop == 1; //
+wire         n_dut_uop_mul       = n_dut_uop == 2; //
+wire         n_dut_uop_pmul      = n_dut_uop == 3; //
+wire         n_dut_uop_madd      = n_dut_uop == 4; //
+wire         n_dut_uop_msub_1    = n_dut_uop == 5; //
+wire         n_dut_uop_msub_2    = n_dut_uop == 6; //
+wire         n_dut_uop_macc_1    = n_dut_uop == 7; //
+wire         n_dut_uop_macc_2    = n_dut_uop == 8; //
 reg          n_dut_mod_lh_sign   ; // RS1 is signed
 reg          n_dut_mod_rh_sign   ; // RS2 is signed
 reg          n_dut_mod_carryless ; // Do a carryless multiplication.
-reg          n_dut_pw_32         ; // 32-bit width packed elements.
-reg          n_dut_pw_16         ; // 32-bit width packed elements.
-reg          n_dut_pw_8          ; // 32-bit width packed elements.
-reg          n_dut_pw_4          ; // 32-bit width packed elements.
-reg          n_dut_pw_2          ; // 32-bit width packed elements.
+wire         n_dut_pw_32         = n_dut_pw == 0; 
+wire         n_dut_pw_16         = n_dut_pw == 1; 
+wire         n_dut_pw_8          = n_dut_pw == 2; 
+wire         n_dut_pw_4          = n_dut_pw == 3; 
+wire         n_dut_pw_2          = n_dut_pw == 4; 
 
 wire [63:0]  dut_result          ; // 64-bit result
 wire         dut_ready           ; // Outputs ready.
 
-always @(posedge clock) begin
+always @(posedge clock) if(!dut_valid || (dut_valid && dut_ready)) begin
     
     dut_valid        <= n_dut_valid;
     dut_rs1          <= n_dut_rs1   ;
@@ -150,55 +153,39 @@ end
 
 //
 // Input stimulus generation
-always @(posedge clock) begin
+always @(*) begin
     
     // Generate new inputs?
     if(!dut_valid || (dut_valid && dut_ready)) begin
 
-        n_dut_rs1 = $random & 32'h80000001;
-        n_dut_rs2 = $random & 32'h80000001;
-        n_dut_rs3 = $random & 32'h80000001;
+        n_dut_rs1 = $random & 32'hFFFFFFFF;
+        n_dut_rs2 = $random & 32'hFFFFFFFF;
+        n_dut_rs3 = $random & 32'hFFFFFFFF;
 
-        n_dut_pw_32 = 1'b0;
-        n_dut_pw_16 = 1'b0;
-        n_dut_pw_8  = 1'b0;
-        n_dut_pw_4  = 1'b0;
-        n_dut_pw_2  = 1'b0;
+        n_dut_pw    = 0;
 
         n_dut_mod_carryless = 1'b0;
         n_dut_mod_lh_sign   = 1'b0;
         n_dut_mod_rh_sign   = 1'b0;
         
-        {n_dut_uop_div   ,
-         n_dut_uop_rem   ,
-         n_dut_uop_mul   ,
-         n_dut_uop_pmul  ,
-         n_dut_uop_madd  ,
-         n_dut_uop_msub_1,
-         n_dut_uop_msub_2,
-         n_dut_uop_macc_1,
-         n_dut_uop_macc_2} = (9'b000100000);// << ($random % 9));
+        n_dut_uop = ($random % 4) & 8'hFF;
 
-        if(dut_uop_div || dut_uop_rem) begin
+        if(n_dut_uop_div || n_dut_uop_rem) begin
             n_dut_mod_lh_sign   = $random;
             n_dut_mod_rh_sign   = n_dut_mod_lh_sign;
-            n_dut_pw_32         = 1'b1;
-        end else if(dut_uop_mul) begin
+            n_dut_pw            = 0;
+        end else if(n_dut_uop_mul) begin
             n_dut_mod_carryless = $random;
             if(!n_dut_mod_carryless) begin
                 n_dut_mod_lh_sign   = $random;
                 n_dut_mod_rh_sign   = $random && n_dut_mod_lh_sign;
             end
-            n_dut_pw_32         = 1'b1;
-        end else if(dut_uop_pmul) begin
+            n_dut_pw            = 0;
+        end else if(n_dut_uop_pmul) begin
             n_dut_mod_carryless = $random;
             n_dut_mod_lh_sign   = 0;
             n_dut_mod_rh_sign   = 0;
-            {n_dut_pw_32,
-             n_dut_pw_16,
-             n_dut_pw_8 ,
-             n_dut_pw_4 ,
-             n_dut_pw_2 } = 5'b1 << ($random % 4);
+            n_dut_pw            = 1+ (($random % 4) & 4'hF);
         end
         
         n_dut_valid = $random && resetn;
@@ -236,6 +223,11 @@ always @(posedge clock) if(resetn) begin
         $display("dut_uop_msub_2: %b", dut_uop_msub_2);
         $display("dut_uop_macc_1: %b", dut_uop_macc_1);
         $display("dut_uop_macc_2: %b", dut_uop_macc_2);
+        $display("dut_pw_32 : %b", dut_pw_32);
+        $display("dut_pw_16 : %b", dut_pw_16);
+        $display("dut_pw_8  : %b", dut_pw_8 );
+        $display("dut_pw_4  : %b", dut_pw_4 );
+        $display("dut_pw_2  : %b", dut_pw_2 );
         $display("- LHS Sign: %d, RHS Sign: %d",dut_mod_lh_sign, dut_mod_rh_sign);
         $display("- Carryless: %d", dut_mod_carryless);
         $display("- Expected %d = %d . %d", grm_result, dut_rs1, dut_rs2);
@@ -252,6 +244,8 @@ wire [63:0] mul_us = $unsigned(dut_rs1) * $signed(dut_rs2);
 wire [63:0] mul_uu = $unsigned(dut_rs1) * $unsigned(dut_rs2);
 
 reg [63:0] grm_result;
+wire[31:0] pmul_result_hi;
+wire[31:0] pmul_result_lo;
        
 always @(*) begin
 
@@ -262,10 +256,12 @@ always @(*) begin
         if(dut_rs2 == 0) begin
             grm_result = -1;
         end else if(dut_mod_lh_sign) begin
-            grm_result = $signed(dut_rs1) / $signed(dut_rs2);
+            grm_result = $signed(dut_rs1)   / $signed(dut_rs2)  ;
         end else begin
             grm_result = $unsigned(dut_rs1) / $unsigned(dut_rs2);
         end
+
+        grm_result = grm_result & 32'hFFFF_FFFF;
 
     end else if(dut_uop_rem) begin
         
@@ -276,6 +272,8 @@ always @(*) begin
         end else begin
             grm_result = $unsigned(dut_rs1) % $unsigned(dut_rs2);
         end
+        
+        grm_result = grm_result & 32'hFFFF_FFFF;
 
     end else if(dut_uop_mul) begin
 
@@ -298,8 +296,12 @@ always @(*) begin
                 grm_result = mul_uu;
 
             end
-
         end
+    
+    end else if(dut_uop_pmul) begin
+
+        grm_result = {pmul_result_hi, pmul_result_lo};
+
     end
 end
 
@@ -335,19 +337,20 @@ xc_malu i_dut(
 .ready           (dut_ready           )  // Outputs ready.
 );
 
+wire [ 4:0] checker_pw= {dut_pw_2, dut_pw_4, dut_pw_8, dut_pw_16, dut_pw_32};
 
 //
 // Checker instantiation for packed multiplication..
-// p_mul_checker i_p_mul_checker (
-// .mul_l (1'b1        ),
-// .mul_h (1'b0        ),
-// .clmul (dut_mod_carryless),
-// .pw    (pw          ),
-// .crs1  (rs1         ),
-// .crs2  (rs2         ),
-// .result_hi(pmul_result_hi),
-// .result(pmul_result_lo)
-// );
+p_mul_checker i_p_mul_checker (
+.mul_l (1'b1        ),
+.mul_h (1'b0        ),
+.clmul (dut_mod_carryless),
+.pw    (checker_pw  ),
+.crs1  (dut_rs1     ),
+.crs2  (dut_rs2     ),
+.result_hi(pmul_result_hi),
+.result(pmul_result_lo)
+);
 
 endmodule
 
