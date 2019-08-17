@@ -24,8 +24,8 @@ parameter   max_ticks    = 100000;
 // Initial values
 initial begin
 
-    //$dumpfile(`STR(`WAVE_FILE));
-    //$dumpvars(0, xc_malu_tb);
+    $dumpfile(`STR(`WAVE_FILE));
+    $dumpvars(0, xc_malu_tb);
 
     resetn  = 1'b0;
     clock   = 1'b0;
@@ -88,6 +88,8 @@ reg          dut_uop_msub_1      ; //
 reg          dut_uop_msub_2      ; //
 reg          dut_uop_macc_1      ; //
 reg          dut_uop_macc_2      ; //
+reg          dut_uop_mmul_1      ; //
+reg          dut_uop_mmul_2      ; //
 reg          dut_mod_lh_sign     ; // RS1 is signed
 reg          dut_mod_rh_sign     ; // RS2 is signed
 reg          dut_mod_carryless   ; // Do a carryless multiplication.
@@ -113,6 +115,8 @@ wire         n_dut_uop_msub_1    = n_dut_uop == 5; //
 wire         n_dut_uop_msub_2    = n_dut_uop == 6; //
 wire         n_dut_uop_macc_1    = n_dut_uop == 7; //
 wire         n_dut_uop_macc_2    = n_dut_uop == 8; //
+wire         n_dut_uop_mmul_1    = n_dut_uop == 9; //
+wire         n_dut_uop_mmul_2    = n_dut_uop == 10; //
 reg          n_dut_mod_lh_sign   ; // RS1 is signed
 reg          n_dut_mod_rh_sign   ; // RS2 is signed
 reg          n_dut_mod_carryless ; // Do a carryless multiplication.
@@ -122,6 +126,8 @@ wire         n_dut_pw_8          = n_dut_pw == 2;
 wire         n_dut_pw_4          = n_dut_pw == 3; 
 wire         n_dut_pw_2          = n_dut_pw == 4; 
 
+wire [63:0]  dut_n_accumulator;
+wire [63:0]  dut_accumulator;
 wire [63:0]  dut_result          ; // 64-bit result
 wire         dut_ready           ; // Outputs ready.
 
@@ -140,6 +146,8 @@ always @(posedge clock) if(!dut_valid || (dut_valid && dut_ready)) begin
     dut_uop_msub_2   <= n_dut_uop_msub_2    ; //
     dut_uop_macc_1   <= n_dut_uop_macc_1    ; //
     dut_uop_macc_2   <= n_dut_uop_macc_2    ; //
+    dut_uop_mmul_1   <= n_dut_uop_mmul_1    ; //
+    dut_uop_mmul_2   <= n_dut_uop_mmul_2    ; //
     dut_mod_lh_sign  <= n_dut_mod_lh_sign   ; // RS1 is signed
     dut_mod_rh_sign  <= n_dut_mod_rh_sign   ; // RS2 is signed
     dut_mod_carryless<= n_dut_mod_carryless ; // Do a carryless multiplication.
@@ -168,7 +176,7 @@ always @(*) begin
         n_dut_mod_lh_sign   = 1'b0;
         n_dut_mod_rh_sign   = 1'b0;
         
-        n_dut_uop = ($random % 4) & 8'hFF;
+        n_dut_uop = ($random % 11) & 8'hFF;
 
         if(n_dut_uop_div || n_dut_uop_rem) begin
             n_dut_mod_lh_sign   = $random;
@@ -223,6 +231,8 @@ always @(posedge clock) if(resetn) begin
         $display("dut_uop_msub_2: %b", dut_uop_msub_2);
         $display("dut_uop_macc_1: %b", dut_uop_macc_1);
         $display("dut_uop_macc_2: %b", dut_uop_macc_2);
+        $display("dut_uop_mmul_1: %b", dut_uop_mmul_1);
+        $display("dut_uop_mmul_2: %b", dut_uop_mmul_2);
         $display("dut_pw_32 : %b", dut_pw_32);
         $display("dut_pw_16 : %b", dut_pw_16);
         $display("dut_pw_8  : %b", dut_pw_8 );
@@ -299,11 +309,33 @@ always @(*) begin
         end
     
     end else if(dut_uop_pmul) begin
+        grm_result = dut_result; //TODO
 
-        grm_result = {pmul_result_hi, pmul_result_lo};
+    end else if(dut_uop_madd  ) begin
+        grm_result = dut_result; //TODO
+
+    end else if(dut_uop_msub_1) begin
+        grm_result = dut_result; //TODO
+
+    end else if(dut_uop_msub_2) begin
+        grm_result = dut_result; //TODO
+
+    end else if(dut_uop_macc_1) begin
+        grm_result = dut_result; //TODO
+
+    end else if(dut_uop_macc_2) begin
+        grm_result = dut_result; //TODO
+
+    end else if(dut_uop_mmul_1) begin
+        grm_result = dut_result; //TODO
+
+    end else if(dut_uop_mmul_2) begin
+        grm_result = dut_result; //TODO
 
     end
+
 end
+
 
 //
 // Instance of the DUT.
@@ -325,6 +357,8 @@ xc_malu i_dut(
 .uop_msub_2      (dut_uop_msub_2      ), //
 .uop_macc_1      (dut_uop_macc_1      ), //
 .uop_macc_2      (dut_uop_macc_2      ), //
+.uop_mmul_1      (dut_uop_mmul_1      ), //
+.uop_mmul_2      (dut_uop_mmul_2      ), //
 .mod_lh_sign     (dut_mod_lh_sign     ), // RS1 is signed
 .mod_rh_sign     (dut_mod_rh_sign     ), // RS2 is signed
 .mod_carryless   (dut_mod_carryless   ), // Do a carryless multiplication.
@@ -334,6 +368,8 @@ xc_malu i_dut(
 .pw_4            (dut_pw_4            ), // 32-bit width packed elements.
 .pw_2            (dut_pw_2            ), // 32-bit width packed elements.
 .result          (dut_result          ), // 64-bit result
+.accumulator     (dut_accumulator     ), //
+.n_accumulator   (dut_n_accumulator   ), //
 .ready           (dut_ready           )  // Outputs ready.
 );
 

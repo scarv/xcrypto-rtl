@@ -41,6 +41,8 @@
 //  msub_2      | acc_lo <= acc_lo - r3[0]  |
 //  macc_1      | {carry, acc_lo} <= r2+r3  |
 //  macc_2      | acc_hi <= r1 + carry      |
+//  mmul_1      | {carry, acc_lo} <= acc_lo + r3
+//  mmul_2      | acc_hi <= acc_hi + carry
 //
 //
 module xc_malu (
@@ -64,6 +66,8 @@ input  wire         uop_msub_1      , //
 input  wire         uop_msub_2      , //
 input  wire         uop_macc_1      , //
 input  wire         uop_macc_2      , //
+input  wire         uop_mmul_1      , //
+input  wire         uop_mmul_2      , //
 
 input  wire         mod_lh_sign     , // RS1 is signed
 input  wire         mod_rh_sign     , // RS2 is signed
@@ -74,7 +78,9 @@ input  wire         pw_8            , // 32-bit width packed elements.
 input  wire         pw_4            , // 32-bit width packed elements.
 input  wire         pw_2            , // 32-bit width packed elements.
 
-output wire [63:0]  result          , // 64-bit multiply result
+output wire [63:0]  result          , // 64-bit result
+output wire [63:0]  accumulator     , 
+output wire [63:0]  n_accumulator   , 
 
 output wire         ready             // Outputs ready.
 
@@ -121,6 +127,18 @@ wire [63:0]  pmul_result         = {pmul_result_hi, pmul_result_lo};
 wire [32:0]  pmul_n_argument     ;
 wire         pmul_finished       ;
 
+wire         uop_malu = 
+    uop_madd   || uop_msub_1 || uop_msub_2 || uop_macc_1 || uop_macc_2 ||
+    uop_mmul_1 || uop_mmul_2 ;
+
+wire [31:0]  malu_padd_lhs       ; // Left hand input
+wire [31:0]  malu_padd_rhs       ; // Right hand input.
+wire         malu_padd_cin       ; // Carry in bit.
+wire [ 0:0]  malu_padd_sub       ; // Subtract if set, else add.
+wire         malu_n_carry        ;
+wire [63:0]  malu_n_accumulator  ;
+wire         malu_finished       = uop_malu;
+
 //
 // Result Multiplexing
 // -----------------------------------------------------------------
@@ -136,18 +154,23 @@ assign       result       = {64{uop_div }} & {32'b0, result_div_q} |
 
 wire [31:0] padd_lhs = {32{uop_drem}} & divrem_padd_lhs |
                        {32{uop_mul }} & mul_padd_lhs    |
+                       {32{uop_malu}} & malu_padd_lhs   |
                        {32{uop_pmul}} & pmul_padd_lhs   ;
 
 wire [31:0] padd_rhs = {32{uop_drem}} & divrem_padd_rhs |
                        {32{uop_mul }} & mul_padd_rhs    |
+                       {32{uop_malu}} & malu_padd_rhs   |
                        {32{uop_pmul}} & pmul_padd_rhs   ;
 
 wire        padd_sub =     uop_drem  && divrem_padd_sub ||
+                           uop_malu  && malu_padd_sub   ||
                            uop_mul   && mul_padd_sub    ;
 
-wire        padd_cin =     uop_drem  && 1'b1            ;
+wire        padd_cin =     uop_drem  && 1'b1            ||
+                           uop_malu  && malu_padd_cin   ;
 
 wire        padd_cen =     uop_drem                     ||
+                           uop_malu                     ||
                            uop_mul   && !mod_carryless  ||
                            uop_pmul  && !mod_carryless  ;
 
@@ -177,7 +200,11 @@ reg  [63:0] acc      ;   // Accumulator
 
 wire [63:0] n_acc    = {64{uop_drem}} & divrem_n_accumulator    |
                        {64{uop_mul }} & mul_n_acc               |
+                       {64{uop_malu}} & malu_n_accumulator      |
                        {64{uop_pmul}} & pmul_n_accumulator      ;
+
+assign accumulator   = acc  ;
+assign n_accumulator = n_acc;
                      
 reg  [31:0] arg0     ;   // Misc intermediate variable
 wire [31:0] n_arg0   = {32{uop_drem}} & divrem_n_arg0           |
@@ -187,12 +214,16 @@ wire [31:0] n_arg0   = {32{uop_drem}} & divrem_n_arg0           |
 reg  [31:0] arg1     ;   // Misc intermediate variable
 wire [31:0] n_arg1   =                  divrem_n_arg1           ;
 
+reg         carry   ;
+wire        n_carry  = malu_n_carry;
+
 always @(posedge clock) begin
     if(!resetn || flush) begin
         count <= 0;
         acc   <= 0;
         arg0  <= 0;
         arg1  <= 0;
+        carry <= 0;
     end else if(valid && !count_en) begin
         acc   <= uop_drem ? n_acc : 0  ;
         arg0  <= uop_drem ? n_arg0: rs2;
@@ -201,6 +232,7 @@ always @(posedge clock) begin
         acc   <= n_acc  ;
         arg0  <= n_arg0 ;
         arg1  <= n_arg1 ;
+        carry <= n_carry;
     end
 end
 
@@ -211,6 +243,7 @@ end
 assign ready = valid && (
     uop_drem && divrem_ready ||
     uop_mul  && mul_finished ||
+    uop_malu && malu_finished||
     uop_pmul && pmul_finished 
 );
 
@@ -312,6 +345,36 @@ xc_malu_pmul i_xc_malu_pmul(
 .pmul_result_hi  (pmul_result_hi    ),
 .pmul_result_lo  (pmul_result_lo    ),
 .finished        (pmul_finished     )
+);
+
+
+//
+// instance: xc_malu_long
+//
+//  Module responsible for handline atomic parts of the multi-precision
+//  arithmetic instructions.
+//
+xc_malu_long i_xc_malu_long(
+.rs1            (rs1               ), //
+.rs2            (rs2               ), //
+.rs3            (rs3               ), //
+.accumulator    (acc               ),
+.carry          (carry             ),
+.padd_lhs       (malu_padd_lhs     ), // Left hand input
+.padd_rhs       (malu_padd_rhs     ), // Right hand input.
+.padd_cin       (malu_padd_cin     ), // Carry in bit.
+.padd_sub       (malu_padd_sub     ), // Subtract if set, else add.
+.padd_carry     (padd_cout         ), // Carry bits
+.padd_result    (padd_result       ), // Result of the operation
+.uop_madd       (uop_madd          ), //
+.uop_msub_1     (uop_msub_1        ), //
+.uop_msub_2     (uop_msub_2        ), //
+.uop_macc_1     (uop_macc_1        ), //
+.uop_macc_2     (uop_macc_2        ), //
+.uop_mmul_1     (uop_mmul_1        ), //
+.uop_mmul_2     (uop_mmul_2        ), //
+.n_carry        (malu_n_carry      ),
+.n_accumulator  (malu_n_accumulator) 
 );
 
 endmodule
