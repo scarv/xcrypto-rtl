@@ -1,0 +1,28 @@
+
+XC_RF_0  = rtl/xc_regfile/xc_rf_0.v
+$(eval $(call tgt_synth,build/xc_regfile/xc_rf_0.v,$(XC_RF_0),xc_rf_0))
+
+XC_RF_FWD_0  = rtl/xc_regfile/xc_rf_0.v \
+               rtl/xc_regfile/xc_rf_fwd_0.v
+$(eval $(call tgt_synth,build/xc_regfile/xc_rf_fwd_0.v,$(XC_RF_FWD_0),xc_rf_fwd_0))
+
+XC_RF_1  = rtl/xc_regfile/xc_rf_1.v
+$(eval $(call tgt_synth,build/xc_regfile/xc_rf_1.v,$(XC_RF_1),xc_rf_1))
+
+XC_RF_FWD_1  = rtl/xc_regfile/xc_rf_1.v \
+               rtl/xc_regfile/xc_rf_fwd_1.v
+$(eval $(call tgt_synth,build/xc_regfile/xc_rf_fwd_1.v,$(XC_RF_FWD_1),xc_rf_fwd_1))
+
+XC_RF_2  = rtl/xc_regfile/xc_rf_2.v
+$(eval $(call tgt_synth,build/xc_regfile/xc_rf_2.v,$(XC_RF_2),xc_rf_2))
+
+XC_RF_FWD_2  = rtl/xc_regfile/xc_rf_2.v \
+               rtl/xc_regfile/xc_rf_fwd_2.v
+$(eval $(call tgt_synth,build/xc_regfile/xc_rf_fwd_2.v,$(XC_RF_FWD_2),xc_rf_fwd_2))
+
+XC_RF_3  = rtl/xc_regfile/xc_rf_3.v
+$(eval $(call tgt_synth,build/xc_regfile/xc_rf_3.v,$(XC_RF_3),xc_rf_3))
+
+XC_RF_FWD_3  = rtl/xc_regfile/xc_rf_3.v \
+               rtl/xc_regfile/xc_rf_fwd_3.v
+$(eval $(call tgt_synth,build/xc_regfile/xc_rf_fwd_3.v,$(XC_RF_FWD_3),xc_rf_fwd_3))

@@ -109,6 +109,7 @@ include rtl/xc_sha512/Makefile.in
 include rtl/xc_aesmix/Makefile.in
 include rtl/xc_aessub/Makefile.in
 include rtl/xc_malu/Makefile.in
+include rtl/xc_regfile/Makefile.in
 
 all: $(ALL_TARGETS)
 
