@@ -5,41 +5,45 @@
 //  - mulh
 //  - mulhu
 //  - mulhsu
+//  - clmul
+//  - clmulh
 //
 module xc_malu_mul (
 
 input  wire [31:0]  rs1             ,
 input  wire [31:0]  rs2             ,
 
-input  wire [ 5:0]  counter         ,
-input  wire [63:0]  accumulator     ,
-input  wire [31:0]  argument        ,
+input  wire [ 5:0]  count           ,
+input  wire [63:0]  acc             ,
+input  wire [31:0]  arg_0           ,
 
 input  wire         carryless       ,
 
 input  wire         lhs_sign        ,
 input  wire         rhs_sign        ,
 
-output wire [31:0]  padd_lhs        , // Left hand input
-output wire [31:0]  padd_rhs        , // Right hand input.
-output wire [ 0:0]  padd_sub        , // Subtract if set, else add.
+output wire [31:0]  padd_lhs        , // Packed adder left input
+output wire [31:0]  padd_rhs        , // Packed adder right input
+output wire         padd_sub        , // Packed adder subtract?
+output wire         padd_cin        , // Packed adder carry in
+output wire         padd_cen        , // Packed adder carry enable.
 
-input       [31:0]  padd_carry      , // Carry bits
-input       [31:0]  padd_result     , // Result of the operation
+input  wire [31:0]  padd_cout       ,
+input  wire [31:0]  padd_result     ,
 
-output wire [63:0]  n_accumulator   ,
-output wire [32:0]  n_argument      ,
-output wire         finished        
+output wire [63:0]  n_acc           ,
+output wire [32:0]  n_arg_0         ,
+output wire         ready           
 
 );
 
-assign finished  = counter == 32;
+assign ready             = count == 32;
 
-wire          add_en     = argument[0];
+wire          add_en     = arg_0[0];
 
-wire          sub_last   = rs2[31] && counter == 31 && rhs_sign && |rs1;
+wire          sub_last   = rs2[31] && count == 31 && rhs_sign && |rs1;
 
-wire [32:0]   add_lhs    = {lhs_sign && accumulator[63], accumulator[63:32]};
+wire [32:0]   add_lhs    = {lhs_sign && acc[63], acc[63:32]};
 wire [32:0]   add_rhs    = add_en ? {lhs_sign && rs1[31], rs1} : 0 ;
 
 assign        padd_lhs   = add_lhs[31:0];
@@ -53,8 +57,8 @@ wire          add_32     = carryless ? 1'b0 :
 
 wire   [32:0] add_result = {add_32, padd_result};
 
-assign n_accumulator     = {add_result, accumulator[31:1]};
+assign n_acc             = {add_result, acc[31:1]};
 
-assign n_argument        = {1'b0, argument[31:1]};
+assign n_arg_0           = {1'b0, arg_0[31:1]};
 
 endmodule

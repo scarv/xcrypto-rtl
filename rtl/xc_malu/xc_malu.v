@@ -12,39 +12,6 @@
 //  - clmul, clmulr, clmulh
 //  - madd, msub, macc, mmul
 //
-//  Instruction | Step 0            | Step 1        | Step 2
-//  ------------|-------------------|---------------|-------------------
-//  div         | r1 / r2           |               |
-//  divu        | r1 / r2           |               |
-//  rem         | r1 / r2           |               |
-//  remu        | r1 / r2           |               |
-//  mul         | r1 * r2           |               |
-//  mulh        | r1 * r2           |               |
-//  mulhu       | r1 * r2           |               |
-//  mulhsu      | r1 * r2           |               |
-//  pmul.l      | r1 * r2           |               |
-//  pmul.h      | r1 * r2           |               |
-//  clmul       | r1 x r2           |               |
-//  clmulr      | r1 x r2           |               |
-//  clmulh      | r1 x r2           |               |
-//  madd        | r1 + r2 + r3[0]   |               |
-//  msub        | r1 - r2           | ac_lo - r3    |
-//  macc        | r2 + r3           | ac_hi + co    |
-//  mmul        | r1 * r2           | ac_lo + r3    | ac_hi + co
-//  
-//  Micro-op    | Operation                 | Modifiers     
-//  ------------|---------------------------|---------------
-//  drem        | {quot, acc} <= r1/r2      | unsigned      
-//  mul         | acc <= r1*r2              | lh_sign, rh_sign, carryless, pw
-//  madd        | res <= r1+r2+r3[0]        | 
-//  msub_1      | acc <= r1-r2              |
-//  msub_2      | acc_lo <= acc_lo - r3[0]  |
-//  macc_1      | {carry, acc_lo} <= r2+r3  |
-//  macc_2      | acc_hi <= r1 + carry      |
-//  mmul_1      | {carry, acc_lo} <= acc_lo + r3
-//  mmul_2      | acc_hi <= acc_hi + carry
-//
-//
 module xc_malu (
 
 input  wire         clock           ,
@@ -58,30 +25,27 @@ input  wire         flush           , // Flush state / pipeline progress
 input  wire         valid           , // Inputs valid.
 
 input  wire         uop_div         , //
+input  wire         uop_divu        , //
 input  wire         uop_rem         , //
+input  wire         uop_remu        , //
 input  wire         uop_mul         , //
+input  wire         uop_mulu        , //
+input  wire         uop_mulsu       , //
+input  wire         uop_clmul       , //
 input  wire         uop_pmul        , //
+input  wire         uop_pclmul      , //
 input  wire         uop_madd        , //
-input  wire         uop_msub_1      , //
-input  wire         uop_msub_2      , //
-input  wire         uop_macc_1      , //
-input  wire         uop_macc_2      , //
-input  wire         uop_mmul_1      , //
-input  wire         uop_mmul_2      , //
+input  wire         uop_msub        , //
+input  wire         uop_macc        , //
+input  wire         uop_mmul        , //
 
-input  wire         mod_lh_sign     , // RS1 is signed
-input  wire         mod_rh_sign     , // RS2 is signed
-input  wire         mod_carryless   , // Do a carryless multiplication.
 input  wire         pw_32           , // 32-bit width packed elements.
-input  wire         pw_16           , // 32-bit width packed elements.
-input  wire         pw_8            , // 32-bit width packed elements.
-input  wire         pw_4            , // 32-bit width packed elements.
-input  wire         pw_2            , // 32-bit width packed elements.
+input  wire         pw_16           , // 16-bit width packed elements.
+input  wire         pw_8            , //  8-bit width packed elements.
+input  wire         pw_4            , //  4-bit width packed elements.
+input  wire         pw_2            , //  2-bit width packed elements.
 
 output wire [63:0]  result          , // 64-bit result
-output wire [63:0]  accumulator     , 
-output wire [63:0]  n_accumulator   , 
-
 output wire         ready             // Outputs ready.
 
 );
@@ -91,131 +55,120 @@ output wire         ready             // Outputs ready.
 // Submodule interface wires
 // -----------------------------------------------------------------
 
-wire         uop_drem   = uop_div || uop_rem;
+wire         insn_divrem    =
+    uop_do_div    || uop_do_divu   || uop_do_rem    || uop_do_remu    ;
 
-wire [31:0]  divrem_padd_lhs        ; // Left hand input
-wire [31:0]  divrem_padd_rhs        ; // Right hand input.
-wire [ 0:0]  divrem_padd_sub        ; // Subtract if set, else add.
-wire [63:0]  divrem_n_accumulator   ;
-wire [31:0]  divrem_n_arg0          ;
-wire [31:0]  divrem_n_arg1          ;
-wire         divrem_ready           ;
+wire         insn_mdr        =
+    insn_divrem   ||
+    uop_do_mul    || uop_do_mulu   || uop_do_mulsu  || uop_do_clmul  ||
+    uop_do_pmul   || uop_do_pclmul ; 
 
-wire         div_outsign  = (mod_lh_sign && (rs1[31] != rs2[31]) && |rs2);
-wire         rem_outsign  = (mod_lh_sign && rs1[31]);
+wire         do_div          = uop_do_div   ; //
+wire         do_divu         = uop_do_divu  ; //
+wire         do_rem          = uop_do_rem   ; //
+wire         do_remu         = uop_do_remu  ; //
+wire         do_mul          = uop_do_mul   ; //
+wire         do_mulu         = uop_do_mulu  ; //
+wire         do_mulsu        = uop_do_mulsu ; //
+wire         do_clmul        = uop_do_clmul ; //
+wire         do_pmul         = uop_do_pmul  ; //
+wire         do_pclmul       = uop_do_pclmul; //
 
-wire [31:0]  neg_arg      = -(uop_div   ? arg1  : arg0);
-
-wire [31:0]  result_div_r = rem_outsign ? neg_arg : arg0;
-wire [31:0]  result_div_q = div_outsign ? neg_arg : arg1;
-
-
-wire [31:0]  mul_padd_lhs        ; // Left hand input
-wire [31:0]  mul_padd_rhs        ; // Right hand input.
-wire         mul_padd_sub        ; // Subtract if set, else add.
-wire [63:0]  mul_n_acc           ;
-wire [32:0]  mul_n_arg0          ;
-wire         mul_finished        ;
-
-wire [31:0]  pmul_padd_lhs       ; // Left hand input
-wire [31:0]  pmul_padd_rhs       ; // Right hand input.
-wire [ 0:0]  pmul_padd_sub       ; // Subtract if set, else add.
-wire [63:0]  pmul_n_accumulator  ;
-wire [31:0]  pmul_result_hi      ;
-wire [31:0]  pmul_result_lo      ;
-wire [63:0]  pmul_result         = {pmul_result_hi, pmul_result_lo};
-wire [32:0]  pmul_n_argument     ;
-wire         pmul_finished       ;
-
-wire         uop_malu = 
-    uop_madd   || uop_msub_1 || uop_msub_2 || uop_macc_1 || uop_macc_2 ||
-    uop_mmul_1 || uop_mmul_2 ;
-
-wire [31:0]  malu_padd_lhs       ; // Left hand input
-wire [31:0]  malu_padd_rhs       ; // Right hand input.
-wire         malu_padd_cin       ; // Carry in bit.
-wire [ 0:0]  malu_padd_sub       ; // Subtract if set, else add.
-wire         malu_n_carry        ;
-wire [63:0]  malu_n_accumulator  ;
-wire         malu_finished       = uop_malu;
+wire [63:0]  mdr_n_acc       ; // Next accumulator value
+wire [31:0]  mdr_n_arg_0     ; // Next arg 0 value
+wire [31:0]  mdr_n_arg_1     ; // Next arg 1 value
+wire [31:0]  mdr_padd_lhs    ; // Packed adder left input
+wire [31:0]  mdr_padd_rhs    ; // Packed adder right input
+wire         mdr_padd_sub    ; // Packed adder subtract?
+wire         mdr_padd_cin    ; // Packed adder carry in
+wire         mdr_padd_cen    ; // Packed adder carry enable.
+wire [63:0]  mdr_result      ; // 64-bit result
+wire         mdr_ready       ; // Outputs ready.
 
 //
 // Result Multiplexing
 // -----------------------------------------------------------------
 
-assign       result       = {64{uop_div }} & {32'b0, result_div_q} |
-                            {64{uop_rem }} & {32'b0, result_div_r} |
-                            {64{uop_mul }} & {acc                } |
-                            {64{uop_pmul}} & {pmul_result        } ;
+assign       result  = {64{insn_mdr}} & mdr_result;
 
 //
 // Packed Adder Interface
 // -----------------------------------------------------------------
 
-wire [31:0] padd_lhs = {32{uop_drem}} & divrem_padd_lhs |
-                       {32{uop_mul }} & mul_padd_lhs    |
-                       {32{uop_malu}} & malu_padd_lhs   |
-                       {32{uop_pmul}} & pmul_padd_lhs   ;
+wire [31:0] padd_lhs = {32{insn_mdr}} & mdr_padd_lhs;
+                       
+wire [31:0] padd_rhs = {32{insn_mdr}} & mdr_padd_rhs;
+                       
+wire        padd_sub =     insn_mdr  && mdr_padd_sub;
+                       
+wire        padd_cin =     insn_mdr  && mdr_padd_cin;
+                      
+wire        padd_cen =     insn_mdr  && mdr_padd_cen;
 
-wire [31:0] padd_rhs = {32{uop_drem}} & divrem_padd_rhs |
-                       {32{uop_mul }} & mul_padd_rhs    |
-                       {32{uop_malu}} & malu_padd_rhs   |
-                       {32{uop_pmul}} & pmul_padd_rhs   ;
+wire [ 4:0] padd_pw  = {pw_2, pw_4, pw_8, pw_16, pw_32};
 
-wire        padd_sub =     uop_drem  && divrem_padd_sub ||
-                           uop_malu  && malu_padd_sub   ||
-                           uop_mul   && mul_padd_sub    ;
+wire [31:0] padd_cout   ;
+wire [31:0] padd_result ;
 
-wire        padd_cin =     uop_drem  && 1'b1            ||
-                           uop_malu  && malu_padd_cin   ;
+//
+// Control FSM
+// -----------------------------------------------------------------
 
-wire        padd_cen =     uop_drem                     ||
-                           uop_malu                     ||
-                           uop_mul   && !mod_carryless  ||
-                           uop_pmul  && !mod_carryless  ;
+reg [5:0] fsm;
+reg [5:0] n_fsm;
 
-wire [ 4:0] padd_pw = {pw_2, pw_4, pw_8, pw_16, pw_32};
+localparam FSM_INIT = 0;
+localparam FSM_MDR  = 1;
 
-wire [31:0] padd_cout;
-wire [31:0] padd_result;
+wire fsm_init = fsm == FSM_INIT;
+wire fsm_mdr  = fsm == FSM_MDR ;
+
+always @(*) begin case(fsm)
+
+FSM_INIT: begin
+    if(valid && insn_mdr) n_fsm <= FSM_MDR   ;
+    else                  n_fsm <= FSM_INIT  ;
+end
+
+FSM_MDR: begin
+    if(mdr_ready) n_fsm <= FSM_INIT ;
+    else          n_fsm <= FSM_MDR  ;
+end
+
+
+
+endcase end
+
+always @(posedge clock) begin
+    if(!resetn || flush) begin
+        fsm <= FSM_INIT;
+    end else begin
+        fsm <= n_fsm;
+    end
+end
 
 //
 // Register State
 // -----------------------------------------------------------------
 
-reg         count_en ;
-
-always @(posedge clock) begin
-    if(!resetn || flush) begin
-        count_en <= 1'b0;
-    end else if(valid && !count_en) begin
-        count_en <= 1'b1;
-    end
-end
-
 reg  [ 5:0] count    ;   // State / step counter.
-wire [ 5:0] n_count = count + 1;
+wire [ 5:0] n_count  = count + 1;
+wire        count_en = fsm_mdr;
 
-reg  [63:0] acc      ;   // Accumulator
+reg  [63:0] acc         ; // Accumulator
 
-wire [63:0] n_acc    = {64{uop_drem}} & divrem_n_accumulator    |
-                       {64{uop_mul }} & mul_n_acc               |
-                       {64{uop_malu}} & malu_n_accumulator      |
-                       {64{uop_pmul}} & pmul_n_accumulator      ;
-
-assign accumulator   = acc  ;
-assign n_accumulator = n_acc;
+wire [63:0] n_acc    = {64{insn_mdr}} & mdr_n_acc   ;
                      
-reg  [31:0] arg0     ;   // Misc intermediate variable
-wire [31:0] n_arg0   = {32{uop_drem}} & divrem_n_arg0           |
-                       {32{uop_mul }} & mul_n_arg0              |
-                       {32{uop_pmul}} & pmul_n_argument         ;
-                     
-reg  [31:0] arg1     ;   // Misc intermediate variable
-wire [31:0] n_arg1   =                  divrem_n_arg1           ;
+reg  [31:0] arg0        ; // Misc intermediate variable
 
-reg         carry   ;
-wire        n_carry  = malu_n_carry;
+wire [31:0] n_arg0   = {32{insn_mdr}} & mdr_n_arg_0 ;
+                     
+reg  [31:0] arg1        ; // Misc intermediate variable
+
+wire [31:0] n_arg1   = {32{insn_mdr}} & mdr_n_arg_1 ;
+
+reg         carry       ;
+wire        n_carry  = 0;
 
 always @(posedge clock) begin
     if(!resetn || flush) begin
@@ -224,9 +177,9 @@ always @(posedge clock) begin
         arg0  <= 0;
         arg1  <= 0;
         carry <= 0;
-    end else if(valid && !count_en) begin
-        acc   <= uop_drem ? n_acc : 0  ;
-        arg0  <= uop_drem ? n_arg0: rs2;
+    end else if(fsm_init && valid) begin
+        acc   <= insn_divrem ? n_acc  : 0     ;
+        arg0  <= insn_divrem ? n_arg0 : rs2   ;
     end else if(count_en && !ready) begin
         count <= n_count;
         acc   <= n_acc  ;
@@ -240,12 +193,7 @@ end
 // Are we finished yet?
 // -----------------------------------------------------------------
 
-assign ready = valid && (
-    uop_drem && divrem_ready ||
-    uop_mul  && mul_finished ||
-    uop_malu && malu_finished||
-    uop_pmul && pmul_finished 
-);
+assign ready = insn_mdr && mdr_ready;
 
 //
 // Submodule instances.
@@ -267,115 +215,47 @@ p_addsub i_p_addsub(
 .result  (padd_result)  // Result of the operation
 );
 
-
-//
-// instance: xc_malu_divrem
-//
-//  Implements {div, divu, rem, remu} instructions.
-//
-xc_malu_divrem i_malu_divrem(
-.clock           (clock                 ),
-.resetn          (resetn                ),
-.rs1             (rs1                   ),
-.rs2             (rs2                   ),
-.valid           (uop_drem && valid     ),
-.op_signed       (mod_lh_sign           ),
-.flush           (flush                 ),
-.counter         (count                 ),
-.accumulator     (acc                   ), // divisor
-.arg0            (arg0                  ), // dividend
-.arg1            (arg1                  ), // quotient
-.padd_lhs        (divrem_padd_lhs       ), // Left hand input
-.padd_rhs        (divrem_padd_rhs       ), // Right hand input.
-.padd_sub        (divrem_padd_sub       ), // Subtract if set, else add.
-.padd_carry      (padd_cout             ), // Carry bits
-.padd_result     (padd_result           ), // Result of the operation
-.n_accumulator   (divrem_n_accumulator  ),
-.n_arg0          (divrem_n_arg0         ),
-.n_arg1          (divrem_n_arg1         ),
-.finished        (divrem_ready          ) 
+xc_malu_muldivrem i_malu_muldivrem (
+.clock      (clock          ),
+.resetn     (resetn         ),
+.rs1        (rs1            ), //
+.rs2        (rs2            ), //
+.rs3        (rs3            ), //
+.flush      (flush          ), // Flush state / pipeline progress
+.valid      (valid          ), // Inputs valid.
+.do_div     (do_div         ), //
+.do_divu    (do_divu        ), //
+.do_rem     (do_rem         ), //
+.do_remu    (do_remu        ), //
+.do_mul     (do_mul         ), //
+.do_mulu    (do_mulu        ), //
+.do_mulsu   (do_mulsu       ), //
+.do_clmul   (do_clmul       ), //
+.do_pmul    (do_pmul        ), //
+.do_pclmul  (do_pclmul      ), //
+.pw_32      (pw_32          ), // 32-bit width packed elements.
+.pw_16      (pw_16          ), // 16-bit width packed elements.
+.pw_8       (pw_8           ), //  8-bit width packed elements.
+.pw_4       (pw_4           ), //  4-bit width packed elements.
+.pw_2       (pw_2           ), //  2-bit width packed elements.
+.count      (count          ), // Current count value
+.acc        (acc            ), // Current accumulator value
+.arg_0      (arg_0          ), // Current arg 0 value
+.arg_1      (arg_1          ), // Current arg 1 value
+.n_acc      (mdr_n_acc      ), // Next accumulator value
+.n_arg_0    (mdr_n_arg_0    ), // Next arg 0 value
+.n_arg_1    (mdr_n_arg_1    ), // Next arg 1 value
+.padd_lhs   (mdr_padd_lhs   ), // Packed adder left input
+.padd_rhs   (mdr_padd_rhs   ), // Packed adder right input
+.padd_sub   (mdr_padd_sub   ), // Packed adder subtract?
+.padd_cin   (mdr_padd_cin   ), // Packed adder carry in
+.padd_cen   (mdr_padd_cen   ), // Packed adder carry enable.
+.padd_cout  (padd_cout      ),
+.padd_result(padd_result    ),
+.result     (mdr_result     ), // 64-bit result
+.ready      (mdr_ready      )  // Outputs ready.
 );
 
-
-//
-// Handles instructions:
-//  - mul
-//  - mulh
-//  - mulhu
-//  - mulhsu
-//
-xc_malu_mul i_xc_malu_mul(
-.rs1           (rs1             ),
-.rs2           (rs2             ),
-.counter       (count           ),
-.accumulator   (acc             ),
-.argument      (arg0            ),
-.carryless     (mod_carryless   ),
-.lhs_sign      (mod_lh_sign     ),
-.rhs_sign      (mod_rh_sign     ),
-.padd_lhs      (mul_padd_lhs    ), // Left hand input
-.padd_rhs      (mul_padd_rhs    ), // Right hand input.
-.padd_sub      (mul_padd_sub    ), // Subtract if set, else add.
-.padd_carry    (padd_cout       ), // Carry bits
-.padd_result   (padd_result     ), // Result of the operation
-.n_accumulator (mul_n_acc       ),
-.n_argument    (mul_n_arg0      ),
-.finished      (mul_finished    )
-);
-
-//
-// Handles instructions:
-//  - pmul
-//  - pmulh
-//
-xc_malu_pmul i_xc_malu_pmul(
-.rs1             (rs1               ),
-.rs2             (rs2               ),
-.counter         (count             ),
-.accumulator     (acc               ),
-.argument        (arg0              ),
-.pw              (padd_pw           ),
-.padd_lhs        (pmul_padd_lhs     ), // Left hand input
-.padd_rhs        (pmul_padd_rhs     ), // Right hand input.
-.padd_sub        (pmul_padd_sub     ), // Subtract if set, else add.
-.padd_carry      (padd_cout         ), // Carry bits
-.padd_result     (padd_result       ), // Result of the operation
-.n_accumulator   (pmul_n_accumulator),
-.n_argument      (pmul_n_argument   ),
-.pmul_result_hi  (pmul_result_hi    ),
-.pmul_result_lo  (pmul_result_lo    ),
-.finished        (pmul_finished     )
-);
-
-
-//
-// instance: xc_malu_long
-//
-//  Module responsible for handline atomic parts of the multi-precision
-//  arithmetic instructions.
-//
-xc_malu_long i_xc_malu_long(
-.rs1            (rs1               ), //
-.rs2            (rs2               ), //
-.rs3            (rs3               ), //
-.accumulator    (acc               ),
-.carry          (carry             ),
-.padd_lhs       (malu_padd_lhs     ), // Left hand input
-.padd_rhs       (malu_padd_rhs     ), // Right hand input.
-.padd_cin       (malu_padd_cin     ), // Carry in bit.
-.padd_sub       (malu_padd_sub     ), // Subtract if set, else add.
-.padd_carry     (padd_cout         ), // Carry bits
-.padd_result    (padd_result       ), // Result of the operation
-.uop_madd       (uop_madd          ), //
-.uop_msub_1     (uop_msub_1        ), //
-.uop_msub_2     (uop_msub_2        ), //
-.uop_macc_1     (uop_macc_1        ), //
-.uop_macc_2     (uop_macc_2        ), //
-.uop_mmul_1     (uop_mmul_1        ), //
-.uop_mmul_2     (uop_mmul_2        ), //
-.n_carry        (malu_n_carry      ),
-.n_accumulator  (malu_n_accumulator) 
-);
 
 endmodule
 
