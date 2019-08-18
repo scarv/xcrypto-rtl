@@ -69,6 +69,7 @@ wire route_pmul= do_pmul|| do_pclmul ;
 // Submodule interface wires
 // -----------------------------------------------------------------
 
+wire         mul_carryless= do_clmul          ;
 wire         mul_lhs_sign = do_mul || do_mulsu;
 wire         mul_rhs_sign = do_mul            ;
 wire [31:0]  mul_padd_lhs        ; // Packed adder left input
@@ -87,7 +88,7 @@ wire [ 0:0]  div_padd_sub        ; // Subtract if set, else add.
 wire [63:0]  div_n_acc           ;
 wire [31:0]  div_n_arg_0         ;
 wire [31:0]  div_n_arg_1         ;
-wire         div_ready           
+wire         div_ready           ;
 
 wire [31:0]  pmul_padd_lhs       ; // Left hand input
 wire [31:0]  pmul_padd_rhs       ; // Right hand input.
@@ -95,6 +96,7 @@ wire [ 0:0]  pmul_padd_sub       ; // Subtract if set, else add.
 wire [63:0]  pmul_n_acc          ;
 wire [31:0]  pmul_n_arg_0        ;
 wire [31:0]  pmul_n_arg_1        ;
+wire [63:0]  pmul_result         ;
 wire         pmul_ready          ;
 
 //
@@ -160,7 +162,7 @@ xc_malu_mul i_xc_malu_mul (
 .count      (count          ),
 .acc        (acc            ),
 .arg_0      (arg_0          ),
-.carryles   (carryles       ),
+.carryless  (mul_carryless  ),
 .lhs_sign   (mul_lhs_sign   ),
 .rhs_sign   (mul_rhs_sign   ),
 .padd_lhs   (mul_padd_lhs   ), // Packed adder left input
@@ -197,7 +199,7 @@ xc_malu_divrem i_xc_malu_divrem (
 .padd_lhs   (div_padd_lhs), // Left hand input
 .padd_rhs   (div_padd_rhs), // Right hand input.
 .padd_sub   (div_padd_sub), // Subtract if set, else add.
-.padd_carry (padd_carry  ), // Carry bits
+.padd_cout  (padd_cout   ), // Carry bits
 .padd_result(padd_result ), // Result of the operation
 .n_acc      (div_n_acc   ),
 .n_arg_0    (div_n_arg_0 ),
@@ -223,7 +225,7 @@ xc_malu_pmul i_malu_pmul(
 .padd_lhs   (pmul_padd_lhs  ), // Left hand input
 .padd_rhs   (pmul_padd_rhs  ), // Right hand input.
 .padd_sub   (pmul_padd_sub  ), // Subtract if set, else add.
-.padd_carry (padd_carry     ), // Carry bits
+.padd_cout  (padd_cout      ), // Carry bits
 .padd_result(padd_result    ), // Result of the operation
 .n_acc      (pmul_n_acc     ),
 .n_arg_0    (pmul_n_arg_0   ),

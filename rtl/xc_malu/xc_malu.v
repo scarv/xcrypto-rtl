@@ -159,13 +159,13 @@ reg  [63:0] acc         ; // Accumulator
 
 wire [63:0] n_acc    = {64{insn_mdr}} & mdr_n_acc   ;
                      
-reg  [31:0] arg0        ; // Misc intermediate variable
+reg  [31:0] arg_0       ; // Misc intermediate variable
 
-wire [31:0] n_arg0   = {32{insn_mdr}} & mdr_n_arg_0 ;
+wire [31:0] n_arg_0  = {32{insn_mdr}} & mdr_n_arg_0 ;
                      
-reg  [31:0] arg1        ; // Misc intermediate variable
+reg  [31:0] arg_1       ; // Misc intermediate variable
 
-wire [31:0] n_arg1   = {32{insn_mdr}} & mdr_n_arg_1 ;
+wire [31:0] n_arg_1  = {32{insn_mdr}} & mdr_n_arg_1 ;
 
 reg         carry       ;
 wire        n_carry  = 0;
@@ -174,17 +174,17 @@ always @(posedge clock) begin
     if(!resetn || flush) begin
         count <= 0;
         acc   <= 0;
-        arg0  <= 0;
-        arg1  <= 0;
+        arg_0 <= 0;
+        arg_1 <= 0;
         carry <= 0;
     end else if(fsm_init && valid) begin
         acc   <= insn_divrem ? n_acc  : 0     ;
-        arg0  <= insn_divrem ? n_arg0 : rs2   ;
+        arg_0  <= insn_divrem ? n_arg_0 : rs2   ;
     end else if(count_en && !ready) begin
         count <= n_count;
         acc   <= n_acc  ;
-        arg0  <= n_arg0 ;
-        arg1  <= n_arg1 ;
+        arg_0 <= n_arg_0 ;
+        arg_1 <= n_arg_1 ;
         carry <= n_carry;
     end
 end

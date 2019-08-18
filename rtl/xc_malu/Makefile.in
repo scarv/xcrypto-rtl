@@ -1,5 +1,6 @@
 
 XC_MALU_RTL   = rtl/xc_malu/xc_malu.v \
+                rtl/xc_malu/xc_malu_muldivrem.v \
                 rtl/xc_malu/xc_malu_divrem.v \
                 rtl/xc_malu/xc_malu_mul.v \
                 rtl/xc_malu/xc_malu_pmul.v \

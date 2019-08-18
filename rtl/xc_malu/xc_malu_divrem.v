@@ -26,7 +26,7 @@ input  wire [31:0]  arg_1           , // Quotient
 output wire [31:0]  padd_lhs        , // Left hand input
 output wire [31:0]  padd_rhs        , // Right hand input.
 output wire [ 0:0]  padd_sub        , // Subtract if set, else add.
-input  wire [31:0]  padd_carry      , // Carry bits
+input  wire [31:0]  padd_cout       , // Carry bits
 input  wire [31:0]  padd_result     , // Result of the operation
 
 output wire [63:0]  n_acc           ,
