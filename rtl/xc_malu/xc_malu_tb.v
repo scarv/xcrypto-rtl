@@ -193,8 +193,40 @@ end
 // Result Checking
 // -----------------------------------------------------------------------
 
+//
+// function: clmul_ref
+//
+//  32-bit carryless multiply reference function.
+//
+function [63:0] clmul_ref;
+    input [31:0] lhs;
+    input [31:0] rhs;
+    input [ 5:0] len;
+
+    reg [63:0] result;
+    integer i;
+
+    result =  rhs[0] ? lhs : 0;
+
+    for(i = 1; i < len; i = i + 1) begin
+        
+        result = result ^ (rhs[i] ? lhs<<i : 32'b0);
+
+    end
+
+    clmul_ref = result;
+
+endfunction
+
+
 reg [63:0] expected_result;
 
+//
+// task: check_expected
+//
+//  Makes sure that the expected answer is what the DUT computed. Prints
+//  debug information and finishes the simulation if it is wrong.
+//
 task check_expected;
     input [63:0] expected;
 
@@ -210,6 +242,12 @@ task check_expected;
 
 endtask
 
+//
+// Checker process
+//
+// - Responsible for modelling the expected result of the DUT for given
+//   inputs and printing errors if there is a mismatch.
+//
 always @(posedge clock) if(dut_valid && dut_ready) begin
 
 if( dut_uop_div   ) begin
@@ -252,7 +290,8 @@ if( dut_uop_mulsu ) begin
 end
 
 if( dut_uop_clmul ) begin
-    // TODO
+    expected_result = clmul_ref(dut_rs1, dut_rs2, 32);
+    check_expected(expected_result);
 end
 
 if( dut_uop_pmul  ) begin
