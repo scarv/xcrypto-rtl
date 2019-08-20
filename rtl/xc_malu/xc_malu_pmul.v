@@ -12,6 +12,7 @@ input  wire [31:0]  rs2             ,
 input  wire [ 5:0]  count           ,
 input  wire [63:0]  acc             ,
 input  wire [31:0]  arg_0           ,
+input  wire         carryless       ,
 
 input  wire         pw_16           , // 16-bit width packed elements.
 input  wire         pw_8            , //  8-bit width packed elements.
@@ -21,6 +22,7 @@ input  wire         pw_2            , //  2-bit width packed elements.
 output wire [31:0]  padd_lhs        , // Left hand input
 output wire [31:0]  padd_rhs        , // Right hand input.
 output wire [ 0:0]  padd_sub        , // Subtract if set, else add.
+output wire         padd_cen        ,
 
 input       [31:0]  padd_cout       , // Carry bits
 input       [31:0]  padd_result     , // Result of the operation
@@ -39,6 +41,8 @@ wire [5:0] counter_finish = {pw_16,pw_8,pw_4,pw_2,1'b0};
 assign n_arg_0   = {1'b0, arg_0[31:1]};
 
 assign ready     = count == counter_finish;
+
+assign padd_cen  = !carryless;
 
 wire add_en_16_0    = arg_0[ 0];
 wire add_en_16_1    = arg_0[16];

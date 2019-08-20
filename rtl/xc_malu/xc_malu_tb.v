@@ -55,6 +55,7 @@ end
 // Integer representation of which operation to perform. Makes it easier
 // to randomly generate a one hot value.
 reg integer unsigned dut_operation;
+reg integer unsigned dut_pw;
 
 reg [31:0]  dut_rs1                         ; //
 reg [31:0]  dut_rs2                         ; //
@@ -83,9 +84,18 @@ reg         dut_pw_2      , n_dut_pw_2      ; //  2-bit packed elements.
 wire [63:0] dut_result    , n_dut_result    ; // 64-bit result
 wire        dut_ready     , n_dut_ready     ; // Outputs ready.
 
+task randomise_pw;
+    n_dut_pw_32 = 1'b0;
+    n_dut_pw_16 = dut_pw == 0;
+    n_dut_pw_8  = dut_pw == 1;
+    n_dut_pw_4  = dut_pw == 2;
+    n_dut_pw_2  = dut_pw == 3;
+endtask
+
 always @(posedge clock) begin
 
-    dut_operation <= $unsigned($random) % 8;
+    dut_operation <= $unsigned($random) % 10;
+    dut_pw        <= $unsigned($random) %  4;
 
     if(!resetn) begin
         dut_rs1        <= 0;
@@ -176,8 +186,8 @@ case(dut_operation)
  5      : begin n_dut_uop_mulu  = 1'b1; n_dut_pw_32 = 1'b1; end
  6      : begin n_dut_uop_mulsu = 1'b1; n_dut_pw_32 = 1'b1; end
  7      : begin n_dut_uop_clmul = 1'b1; n_dut_pw_32 = 1'b1; end
- 8      : begin n_dut_uop_pmul  = 1'b1; end
- 9      : begin n_dut_uop_pclmul= 1'b1; end
+ 8      : begin n_dut_uop_pmul  = 1'b1; randomise_pw      ; end
+ 9      : begin n_dut_uop_pclmul= 1'b1; randomise_pw      ; end
  10     : begin n_dut_uop_madd  = 1'b1; n_dut_pw_32 = 1'b1; end
  11     : begin n_dut_uop_msub  = 1'b1; n_dut_pw_32 = 1'b1; end
  12     : begin n_dut_uop_macc  = 1'b1; n_dut_pw_32 = 1'b1; end
@@ -219,7 +229,19 @@ function [63:0] clmul_ref;
 endfunction
 
 
-reg [63:0] expected_result;
+// The result we *should* get from the DUT.
+reg  [63:0] expected_result;
+
+// Interface wire - result from the packed multiply checker.
+wire [63:0] expected_result_pmul;
+
+wire pmul_checker_carryless = dut_uop_clmul || dut_uop_pclmul;
+wire [4:0] pmul_checker_pw  = {dut_pw_2 ,
+                               dut_pw_4 ,
+                               dut_pw_8 ,
+                               dut_pw_16,
+                               dut_pw_32};
+
 
 //
 // task: check_expected
@@ -295,11 +317,13 @@ if( dut_uop_clmul ) begin
 end
 
 if( dut_uop_pmul  ) begin
-    // TODO
+    expected_result = expected_result_pmul;
+    check_expected(expected_result);
 end
 
 if( dut_uop_pclmul) begin
-    // TODO
+    expected_result = expected_result_pmul;
+    check_expected(expected_result);
 end
 
 if( dut_uop_madd  ) begin
@@ -353,6 +377,27 @@ xc_malu i_dut(
 .pw_2      (dut_pw_2      ), //  2-bit width packed elements.
 .result    (dut_result    ), // 64-bit result
 .ready     (dut_ready     )  // Outputs ready.
+);
+
+
+//
+// Checker Submodule Instances
+// -----------------------------------------------------------------------
+
+//
+// instance: i_p_mul_checker
+//
+//  Packed [carryless] multiply operation checker.
+//
+p_mul_checker i_p_mul_checker(
+.mul_l    (1'b1                         ),
+.mul_h    (1'b0                         ),
+.clmul    (pmul_checker_carryless       ),
+.pw       (pmul_checker_pw              ),
+.crs1     (dut_rs1                      ),
+.crs2     (dut_rs2                      ),
+.result   (expected_result_pmul[31: 0]  ),
+.result_hi(expected_result_pmul[63:32]  )
 );
 
 endmodule

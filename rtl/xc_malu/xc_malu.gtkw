@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
-[*] Tue Aug 20 14:20:24 2019
+[*] Tue Aug 20 14:59:54 2019
 [*]
 [dumpfile] "/home/ben/work/xcrypto-rtl/build/xc_malu/xc_malu.vcd"
-[dumpfile_mtime] "Tue Aug 20 14:20:03 2019"
-[dumpfile_size] 246631
+[dumpfile_mtime] "Tue Aug 20 14:59:41 2019"
+[dumpfile_size] 28309390
 [savefile] "/home/ben/work/xcrypto-rtl/rtl/xc_malu/xc_malu.gtkw"
-[timestart] 2802
+[timestart] 0
 [size] 1920 1025
 [pos] -1 -1
-*-7.754553 23747 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-14.898595 68100 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] xc_malu_tb.
 [treeopen] xc_malu_tb.i_dut.
 [treeopen] xc_malu_tb.i_dut.i_malu_muldivrem.
@@ -48,12 +48,12 @@ xc_malu_tb.dut_uop_mulu
 xc_malu_tb.dut_uop_rem
 xc_malu_tb.dut_uop_remu
 xc_malu_tb.dut_uop_clmul
+xc_malu_tb.dut_uop_pclmul
+xc_malu_tb.dut_uop_pmul
 xc_malu_tb.dut_uop_macc
 xc_malu_tb.dut_uop_madd
 xc_malu_tb.dut_uop_mmul
 xc_malu_tb.dut_uop_msub
-xc_malu_tb.dut_uop_pclmul
-xc_malu_tb.dut_uop_pmul
 @200
 -
 @22
@@ -61,6 +61,8 @@ xc_malu_tb.dut_rs1[31:0]
 xc_malu_tb.dut_rs2[31:0]
 xc_malu_tb.dut_rs3[31:0]
 xc_malu_tb.dut_result[63:0]
+xc_malu_tb.expected_result[63:0]
+xc_malu_tb.expected_result_pmul[63:0]
 @800200
 -Adder
 @28
@@ -194,6 +196,9 @@ xc_malu_tb.i_dut.i_malu_muldivrem.clock
 @24
 xc_malu_tb.i_dut.i_malu_muldivrem.count[5:0]
 @22
+xc_malu_tb.i_dut.i_malu_muldivrem.div_result[63:0]
+xc_malu_tb.i_dut.i_malu_muldivrem.divrem_result[63:0]
+xc_malu_tb.i_dut.i_malu_muldivrem.rem_result[63:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.div_n_acc[63:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.div_n_arg_0[31:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.div_n_arg_1[31:0]
@@ -283,29 +288,32 @@ xc_malu_tb.i_dut.i_malu_muldivrem.rs3[31:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.valid
 @1401200
 -DUT: xc_malu_muldivrem
-@c00200
+@c00201
 -DUT: xc_malu_mul
+@24
+xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.count[5:0]
+@28
+xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.carryless
+xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.padd_cen
+xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.ready
 @22
+xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.rs1[31:0]
+xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.rs2[31:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.acc[63:0]
+xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.arg_0[31:0]
 @28
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.add_32
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.add_en
 @22
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.add_lhs[32:0]
-xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.add_result[32:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.add_rhs[32:0]
-xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.arg_0[31:0]
-@28
-xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.carryless
-@22
-xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.count[5:0]
+xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.add_result[32:0]
 @28
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.lhs_sign
 @22
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.n_acc[63:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.n_arg_0[32:0]
 @28
-xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.padd_cen
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.padd_cin
 @22
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.padd_cout[31:0]
@@ -314,16 +322,11 @@ xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.padd_result[31:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.padd_rhs[31:0]
 @28
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.padd_sub
-xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.ready
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.rhs_sign
-@22
-xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.rs1[31:0]
-xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.rs2[31:0]
-@28
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.sub_last
-@1401200
+@1401201
 -DUT: xc_malu_mul
-@c00201
+@c00200
 -DUT: xc_malu_divrem
 @28
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_divrem.clock
@@ -445,7 +448,7 @@ xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_divrem.qmask[31:0]
 @28
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_divrem.signed_lhs
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_divrem.signed_rhs
-@1401201
+@1401200
 -DUT: xc_malu_divrem
 [pattern_trace] 1
 [pattern_trace] 0

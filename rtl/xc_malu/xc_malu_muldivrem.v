@@ -69,9 +69,9 @@ wire route_pmul= do_pmul|| do_pclmul ;
 // Submodule interface wires
 // -----------------------------------------------------------------
 
-wire         mul_carryless= do_clmul          ;
-wire         mul_lhs_sign = do_mul || do_mulsu;
-wire         mul_rhs_sign = do_mul            ;
+wire         mul_carryless= do_clmul || do_pclmul;
+wire         mul_lhs_sign = do_mul   || do_mulsu ;
+wire         mul_rhs_sign = do_mul               ;
 wire [31:0]  mul_padd_lhs        ; // Packed adder left input
 wire [31:0]  mul_padd_rhs        ; // Packed adder right input
 wire         mul_padd_sub        ; // Packed adder subtract?
@@ -142,7 +142,7 @@ assign padd_cin =     route_mul   &&  mul_padd_cin ||
 
 assign padd_cen =     route_mul   &&  mul_padd_cen ||
                       route_div   &&  1'b1         ||
-                      route_pmul  &&  1'b1         ;
+                      route_pmul  &&  pmul_padd_cen;
 
 assign result   = {64{route_pmul}} & pmul_result   |
                   {64{route_mul }} &  mul_result   |
@@ -227,6 +227,7 @@ xc_malu_pmul i_malu_pmul(
 .count      (count          ),
 .acc        (acc            ),
 .arg_0      (arg_0          ),
+.carryless  (mul_carryless  ),
 .pw_16      (pw_16          ), // 16-bit width packed elements.
 .pw_8       (pw_8           ), //  8-bit width packed elements.
 .pw_4       (pw_4           ), //  4-bit width packed elements.
@@ -234,6 +235,7 @@ xc_malu_pmul i_malu_pmul(
 .padd_lhs   (pmul_padd_lhs  ), // Left hand input
 .padd_rhs   (pmul_padd_rhs  ), // Right hand input.
 .padd_sub   (pmul_padd_sub  ), // Subtract if set, else add.
+.padd_cen   (pmul_padd_cen  ), // Packed adder carry enable.
 .padd_cout  (padd_cout      ), // Carry bits
 .padd_result(padd_result    ), // Result of the operation
 .n_acc      (pmul_n_acc     ),
