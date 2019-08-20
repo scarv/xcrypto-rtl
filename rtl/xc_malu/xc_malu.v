@@ -55,13 +55,16 @@ output wire         ready             // Outputs ready.
 // Submodule interface wires
 // -----------------------------------------------------------------
 
-wire         insn_divrem    =
+wire         insn_divrem     =
     uop_div    || uop_divu   || uop_rem    || uop_remu    ;
 
 wire         insn_mdr        =
     insn_divrem   ||
     uop_mul    || uop_mulu   || uop_mulsu  || uop_clmul  ||
     uop_pmul   || uop_pclmul ; 
+
+wire         insn_long       =
+    uop_madd   || uop_msub   || uop_macc   || uop_mmul    ;
 
 wire         do_div          = uop_div   ; //
 wire         do_divu         = uop_divu  ; //
@@ -85,25 +88,40 @@ wire         mdr_padd_cen    ; // Packed adder carry enable.
 wire [63:0]  mdr_result      ; // 64-bit result
 wire         mdr_ready       ; // Outputs ready.
 
+wire [31:0]  long_padd_lhs     ; // Left hand input
+wire [31:0]  long_padd_rhs     ; // Right hand input.
+wire         long_padd_cin     ; // Carry in bit.
+wire [ 0:0]  long_padd_sub     ; // Subtract if set, else add.
+wire         long_n_carry      ;
+wire [63:0]  long_n_acc        ;
+wire [63:0]  long_result       ;
+wire         long_ready        ;
+
 //
 // Result Multiplexing
 // -----------------------------------------------------------------
 
-assign       result  = {64{insn_mdr}} & mdr_result;
+assign       result  = {64{insn_mdr }} &  mdr_result |
+                       {64{insn_long}} & long_result ;
 
 //
 // Packed Adder Interface
 // -----------------------------------------------------------------
 
-wire [31:0] padd_lhs = {32{insn_mdr}} & mdr_padd_lhs;
+wire [31:0] padd_lhs = {32{insn_mdr }} &  mdr_padd_lhs |
+                       {32{insn_long}} & long_padd_lhs ;
                        
-wire [31:0] padd_rhs = {32{insn_mdr}} & mdr_padd_rhs;
+wire [31:0] padd_rhs = {32{insn_mdr }} &  mdr_padd_rhs |
+                       {32{insn_long}} & long_padd_rhs ;
                        
-wire        padd_sub =     insn_mdr  && mdr_padd_sub;
+wire        padd_sub =     insn_mdr   &&  mdr_padd_sub ||
+                           insn_long  && long_padd_sub ;
                        
-wire        padd_cin =     insn_mdr  && mdr_padd_cin;
+wire        padd_cin =     insn_mdr   &&  mdr_padd_cin ||
+                           insn_long  && long_padd_cin ;
                       
-wire        padd_cen =     insn_mdr  && mdr_padd_cen;
+wire        padd_cen =     insn_mdr   &&  mdr_padd_cen ||
+                           insn_long  &&          1'b1 ;
 
 wire [ 4:0] padd_pw  = {pw_2, pw_4, pw_8, pw_16, pw_32};
 
@@ -157,18 +175,19 @@ wire        count_en = fsm_mdr;
 
 reg  [63:0] acc         ; // Accumulator
 
-wire [63:0] n_acc    = {64{insn_mdr}} & mdr_n_acc   ;
+wire [63:0] n_acc    = {64{insn_mdr }} &  mdr_n_acc  |
+                       {64{insn_long}} & long_n_acc  ;
                      
 reg  [31:0] arg_0       ; // Misc intermediate variable
 
-wire [31:0] n_arg_0  = {32{insn_mdr}} & mdr_n_arg_0 ;
+wire [31:0] n_arg_0  = {32{insn_mdr }} &  mdr_n_arg_0;
                      
 reg  [31:0] arg_1       ; // Misc intermediate variable
 
-wire [31:0] n_arg_1  = {32{insn_mdr}} & mdr_n_arg_1 ;
+wire [31:0] n_arg_1  = {32{insn_mdr }} &  mdr_n_arg_1;
 
 reg         carry       ;
-wire        n_carry  = 0;
+wire        n_carry  = insn_long && long_n_carry     ;
 
 always @(posedge clock) begin
     if(!resetn || flush) begin
@@ -194,7 +213,8 @@ end
 // Are we finished yet?
 // -----------------------------------------------------------------
 
-assign ready = insn_mdr && mdr_ready;
+assign ready = insn_mdr     && mdr_ready    ||
+               insn_long    && long_ready   ;
 
 //
 // Submodule instances.
@@ -257,6 +277,28 @@ xc_malu_muldivrem i_malu_muldivrem (
 .ready      (mdr_ready      )  // Outputs ready.
 );
 
+xc_malu_long i_xc_malu_long (
+.rs1            (rs1                ), //
+.rs2            (rs2                ), //
+.rs3            (rs3                ), //
+.acc            (acc                ),
+.carry          (carry              ),
+.count          (count              ),
+.padd_lhs       (long_padd_lhs      ), // Left hand input
+.padd_rhs       (long_padd_rhs      ), // Right hand input.
+.padd_cin       (long_padd_cin      ), // Carry in bit.
+.padd_sub       (long_padd_sub      ), // Subtract if set, else add.
+.padd_cout      (padd_cout          ), // Carry bits
+.padd_result    (padd_result        ), // Result of the operation
+.uop_madd       (uop_madd           ), //
+.uop_msub       (uop_msub           ), //
+.uop_macc       (uop_macc           ), //
+.uop_mmul       (uop_mmul           ), //
+.n_carry        (long_n_carry       ),
+.n_acc          (long_n_acc         ),
+.result         (long_result        ),
+.ready          (long_ready         )
+);
 
 endmodule
 
