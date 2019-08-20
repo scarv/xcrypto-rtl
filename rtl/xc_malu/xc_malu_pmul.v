@@ -26,7 +26,7 @@ input       [31:0]  padd_cout       , // Carry bits
 input       [31:0]  padd_result     , // Result of the operation
 
 output wire [63:0]  n_acc   ,
-output wire [32:0]  n_arg_0         ,
+output wire [31:0]  n_arg_0         ,
 
 output wire [63:0]  result          ,
 

@@ -50,10 +50,13 @@ assign        padd_lhs   = add_lhs[31:0];
 assign        padd_rhs   = add_rhs[31:0];
 assign        padd_sub   = sub_last;
 
+assign        padd_cin   = 1'b0;
+assign        padd_cen   = !carryless;
+
 wire          add_32     = carryless ? 1'b0 :
                            add_lhs[32] + 
                            add_rhs[32] +
-                           sub_last    + padd_carry[31];
+                           sub_last    + padd_cout[31];
 
 wire   [32:0] add_result = {add_32, padd_result};
 

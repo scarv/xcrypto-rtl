@@ -37,7 +37,7 @@ input  wire         pw_8            , //  8-bit width packed elements.
 input  wire         pw_4            , //  4-bit width packed elements.
 input  wire         pw_2            , //  2-bit width packed elements.
 
-input  wire         count           , // Current count value
+input  wire [ 5:0]  count           , // Current count value
 input  wire [63:0]  acc             , // Current accumulator value
 input  wire [31:0]  arg_0           , // Current arg 0 value
 input  wire [31:0]  arg_1           , // Current arg 1 value
@@ -80,6 +80,13 @@ wire         mul_padd_cen        ; // Packed adder carry enable.
 wire [63:0]  mul_n_acc           ;
 wire [32:0]  mul_n_arg_0         ;
 wire         mul_ready           ;
+wire [63:0]  mul_result   = acc;
+
+wire         div_outsign  = do_div && (rs1[31] != rs2[31]) && |rs2;
+wire         rem_outsign  = do_rem && rs1[31];
+
+wire         result_div   = do_div || do_divu;
+wire         result_rem   = do_rem || do_remu;
 
 wire         div_signed   = do_div || do_rem  ;
 wire [31:0]  div_padd_lhs        ; // Left hand input
@@ -89,6 +96,10 @@ wire [63:0]  div_n_acc           ;
 wire [31:0]  div_n_arg_0         ;
 wire [31:0]  div_n_arg_1         ;
 wire         div_ready           ;
+
+wire [63:0]  div_result          = div_outsign ? -arg_1 : arg_1;
+wire [63:0]  rem_result          = rem_outsign ? -arg_0 : arg_0;
+wire [63:0]  divrem_result       = result_div ? div_result : rem_result;
 
 wire [31:0]  pmul_padd_lhs       ; // Left hand input
 wire [31:0]  pmul_padd_rhs       ; // Right hand input.
@@ -111,9 +122,7 @@ assign n_arg_0  = {32{route_pmul}} & pmul_n_arg_0  |
                   {32{route_mul }} &  mul_n_arg_0  |
                   {32{route_div }} &  div_n_arg_0  ;
 
-assign n_arg_1  = {32{route_pmul}} & pmul_n_arg_1  |
-                  {32{route_mul }} &  mul_n_arg_1  |
-                  {32{route_div }} &  div_n_arg_1  ;
+assign n_arg_1  = {32{route_div }} &  div_n_arg_1  ;
 
 assign padd_lhs = {32{route_pmul}} & pmul_padd_lhs |
                   {32{route_mul }} &  mul_padd_lhs |
@@ -123,24 +132,24 @@ assign padd_rhs = {32{route_pmul}} & pmul_padd_rhs |
                   {32{route_mul }} &  mul_padd_rhs |
                   {32{route_div }} &  div_padd_rhs ;
 
-assign padd_sub =     route_pmul  && pmul_padd_sub |
-                      route_mul   &&  mul_padd_sub |
+assign padd_sub =     route_pmul  && pmul_padd_sub ||
+                      route_mul   &&  mul_padd_sub ||
                       route_div   &&  div_padd_sub ;
 
-assign padd_cin =     route_pmul  && pmul_padd_cin |
-                      route_mul   &&  mul_padd_cin |
-                      route_div   &&  div_padd_cin ;
+assign padd_cin =     route_mul   &&  mul_padd_cin ||
+                      route_div   &&  1'b0         ||
+                      route_pmul  &&  1'b0         ;
 
-assign padd_cen =     route_pmul  && pmul_padd_cen |
-                      route_mul   &&  mul_padd_cen |
-                      route_div   &&  div_padd_cen ;
+assign padd_cen =     route_mul   &&  mul_padd_cen ||
+                      route_div   &&  1'b1         ||
+                      route_pmul  &&  1'b1         ;
 
 assign result   = {64{route_pmul}} & pmul_result   |
                   {64{route_mul }} &  mul_result   |
-                  {64{route_div }} &  div_result   ;
+                  {64{route_div }} & divrem_result ;
 
-assign ready    =     route_pmul  && pmul_ready    |
-                      route_mul   &&  mul_ready    |
+assign ready    =     route_pmul  && pmul_ready    ||
+                      route_mul   &&  mul_ready    ||
                       route_div   &&  div_ready    ;
 
 //

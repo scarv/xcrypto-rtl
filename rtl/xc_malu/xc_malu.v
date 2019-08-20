@@ -56,23 +56,23 @@ output wire         ready             // Outputs ready.
 // -----------------------------------------------------------------
 
 wire         insn_divrem    =
-    uop_do_div    || uop_do_divu   || uop_do_rem    || uop_do_remu    ;
+    uop_div    || uop_divu   || uop_rem    || uop_remu    ;
 
 wire         insn_mdr        =
     insn_divrem   ||
-    uop_do_mul    || uop_do_mulu   || uop_do_mulsu  || uop_do_clmul  ||
-    uop_do_pmul   || uop_do_pclmul ; 
+    uop_mul    || uop_mulu   || uop_mulsu  || uop_clmul  ||
+    uop_pmul   || uop_pclmul ; 
 
-wire         do_div          = uop_do_div   ; //
-wire         do_divu         = uop_do_divu  ; //
-wire         do_rem          = uop_do_rem   ; //
-wire         do_remu         = uop_do_remu  ; //
-wire         do_mul          = uop_do_mul   ; //
-wire         do_mulu         = uop_do_mulu  ; //
-wire         do_mulsu        = uop_do_mulsu ; //
-wire         do_clmul        = uop_do_clmul ; //
-wire         do_pmul         = uop_do_pmul  ; //
-wire         do_pclmul       = uop_do_pclmul; //
+wire         do_div          = uop_div   ; //
+wire         do_divu         = uop_divu  ; //
+wire         do_rem          = uop_rem   ; //
+wire         do_remu         = uop_remu  ; //
+wire         do_mul          = uop_mul   ; //
+wire         do_mulu         = uop_mulu  ; //
+wire         do_mulsu        = uop_mulsu ; //
+wire         do_clmul        = uop_clmul ; //
+wire         do_pmul         = uop_pmul  ; //
+wire         do_pclmul       = uop_pclmul; //
 
 wire [63:0]  mdr_n_acc       ; // Next accumulator value
 wire [31:0]  mdr_n_arg_0     ; // Next arg 0 value
@@ -178,8 +178,9 @@ always @(posedge clock) begin
         arg_1 <= 0;
         carry <= 0;
     end else if(fsm_init && valid) begin
-        acc   <= insn_divrem ? n_acc  : 0     ;
+        acc    <= insn_divrem ? n_acc  : 0     ;
         arg_0  <= insn_divrem ? n_arg_0 : rs2   ;
+        arg_1  <= 0;
     end else if(count_en && !ready) begin
         count <= n_count;
         acc   <= n_acc  ;

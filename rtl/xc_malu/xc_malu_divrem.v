@@ -54,14 +54,15 @@ wire        div_less    = acc <= {32'b0,arg_0};
 assign      padd_lhs    = arg_0;
 assign      padd_rhs    = acc [31:0];
 assign      padd_sub    = 1'b1;
+        
 
 wire [63:0] divisor_start = 
     {(signed_rhs ? -{{32{rs2[31]}},rs2} : {32'b0,rs2}), 31'b0};
 
 
-assign      n_acc       = div_start    ? divisor_start      :
-                         !div_finished ? accumulator >> 1   :
-                                         accumulator        ;
+assign      n_acc       = div_start    ? divisor_start  :
+                         !div_finished ? acc >> 1       :
+                                         acc            ;
 
 assign      n_arg_0     = div_start ? (signed_lhs ? -rs1 : rs1) :
                           div_less  ? padd_result               :
