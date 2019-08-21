@@ -236,9 +236,10 @@ always @(posedge clock) begin
         arg_1 <= 0;
         carry <= 0;
     end else if(fsm_init && valid) begin
-        acc    <= ld_on_init ? n_acc  : 0     ;
-        arg_0  <= ld_on_init ? n_arg_0 : rs2   ;
-        arg_1  <= 0;
+        acc   <= ld_on_init ? n_acc  : 0     ;
+        arg_0 <= ld_on_init ? n_arg_0 : rs2   ;
+        arg_1 <= 0;
+        carry <= n_carry;
     end else if(reg_ld_en && !ready && !fsm_done && valid) begin
         count <= n_count;
         acc   <= n_acc  ;
