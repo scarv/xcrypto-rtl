@@ -94,7 +94,7 @@ endtask
 
 always @(posedge clock) begin
 
-    dut_operation <= $unsigned($random) % 11;
+    dut_operation <= $unsigned($random) % 12;
     dut_pw        <= $unsigned($random) %  4;
 
     if(!resetn) begin
@@ -273,25 +273,25 @@ endtask
 always @(posedge clock) if(dut_valid && dut_ready) begin
 
 if( dut_uop_div   ) begin
-    if(dut_rs2== 0) expected_result = -64'd1;
+    if(dut_rs2== 0) expected_result = 64'hFFFFFFFF;
     else            expected_result = $signed(dut_rs1) / $signed(dut_rs2);
     check_expected(expected_result);
 end
 
 if( dut_uop_divu  ) begin
-    if(dut_rs2== 0) expected_result = -64'd1;
+    if(dut_rs2== 0) expected_result = 64'hFFFFFFFF;
     else            expected_result = $unsigned(dut_rs1) / $unsigned(dut_rs2);
     check_expected(expected_result);
 end
 
 if( dut_uop_rem   ) begin
-    if(dut_rs2== 0) expected_result = dut_rs2;
+    if(dut_rs2== 0) expected_result = dut_rs1;
     else            expected_result = $signed(dut_rs1) % $signed(dut_rs2);
     check_expected(expected_result);
 end
 
 if( dut_uop_remu  ) begin
-    if(dut_rs2== 0) expected_result = dut_rs2;
+    if(dut_rs2== 0) expected_result = dut_rs1;
     else            expected_result = $unsigned(dut_rs1) % $unsigned(dut_rs2);
     check_expected(expected_result);
 end
@@ -332,7 +332,9 @@ if( dut_uop_madd  ) begin
 end
 
 if( dut_uop_msub  ) begin
-    // TODO
+    expected_result = ((dut_rs1 - dut_rs2) - dut_rs3[0]);
+    expected_result = {31'b0, expected_result[31],expected_result[31:0]};
+    check_expected(expected_result);
 end
 
 if( dut_uop_macc  ) begin

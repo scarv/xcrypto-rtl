@@ -132,28 +132,63 @@ wire [31:0] padd_result ;
 // Control FSM
 // -----------------------------------------------------------------
 
-reg [5:0] fsm;
-reg [5:0] n_fsm;
+reg [6:0] fsm;
+reg [6:0] n_fsm;
 
-localparam FSM_INIT = 0;
-localparam FSM_MDR  = 1;
+localparam FSM_INIT     = 7'b0000001;
+localparam FSM_MDR      = 7'b0000010;
+localparam FSM_MSUB_1   = 7'b0000100;
+localparam FSM_MACC_1   = 7'b0001000;
+localparam FSM_MMUL_1   = 7'b0010000;
+localparam FSM_MMUL_2   = 7'b0100000;
+localparam FSM_DONE     = 7'b1000000;
 
-wire fsm_init = fsm == FSM_INIT;
-wire fsm_mdr  = fsm == FSM_MDR ;
+wire fsm_init   = fsm[0];
+wire fsm_mdr    = fsm[1];
+wire fsm_msub_1 = fsm[2];
+wire fsm_macc_1 = fsm[3];
+wire fsm_mmul_1 = fsm[4];
+wire fsm_mmul_2 = fsm[5];
+wire fsm_done   = fsm[6];
 
 always @(*) begin case(fsm)
 
-FSM_INIT: begin
-    if(valid && insn_mdr) n_fsm <= FSM_MDR   ;
-    else                  n_fsm <= FSM_INIT  ;
-end
-
-FSM_MDR: begin
-    if(mdr_ready) n_fsm <= FSM_INIT ;
-    else          n_fsm <= FSM_MDR  ;
-end
-
-
+    FSM_INIT: begin
+        if(valid) begin
+            if     (insn_mdr             ) n_fsm <= FSM_MDR   ;
+            else if(uop_msub             ) n_fsm <= FSM_MSUB_1;
+            else if(uop_macc             ) n_fsm <= FSM_MACC_1;
+            else if(uop_mmul && mdr_ready) n_fsm <= FSM_MMUL_1;
+        end else begin
+            n_fsm <= FSM_INIT  ;
+        end
+    end
+    
+    FSM_MDR  : begin
+        if(mdr_ready) n_fsm <= FSM_DONE ;
+        else          n_fsm <= FSM_MDR  ;
+    end
+    
+    FSM_MSUB_1: begin
+        n_fsm <= FSM_DONE;
+    end
+    
+    FSM_MACC_1: begin
+        n_fsm <= FSM_DONE;
+    end
+    
+    FSM_MMUL_1: begin
+        n_fsm <= FSM_MMUL_2;
+    end
+    
+    FSM_MMUL_2: begin
+        n_fsm <= FSM_DONE;
+    end
+    
+    FSM_DONE  : begin
+        // Stay in this state until flush is assertd.
+        n_fsm <= FSM_DONE;
+    end
 
 endcase end
 
@@ -189,6 +224,10 @@ wire [31:0] n_arg_1  = {32{insn_mdr }} &  mdr_n_arg_1;
 reg         carry       ;
 wire        n_carry  = insn_long && long_n_carry     ;
 
+wire        ld_on_init = insn_divrem || insn_long;
+wire        reg_ld_en  = count_en               ||
+                         insn_long              ;
+
 always @(posedge clock) begin
     if(!resetn || flush) begin
         count <= 0;
@@ -197,10 +236,10 @@ always @(posedge clock) begin
         arg_1 <= 0;
         carry <= 0;
     end else if(fsm_init && valid) begin
-        acc    <= insn_divrem ? n_acc  : 0     ;
-        arg_0  <= insn_divrem ? n_arg_0 : rs2   ;
+        acc    <= ld_on_init ? n_acc  : 0     ;
+        arg_0  <= ld_on_init ? n_arg_0 : rs2   ;
         arg_1  <= 0;
-    end else if(count_en && !ready) begin
+    end else if(reg_ld_en && !ready && !fsm_done && valid) begin
         count <= n_count;
         acc   <= n_acc  ;
         arg_0 <= n_arg_0 ;
@@ -214,7 +253,8 @@ end
 // -----------------------------------------------------------------
 
 assign ready = insn_mdr     && mdr_ready    ||
-               insn_long    && long_ready   ;
+               insn_long    && long_ready   ||
+               fsm_done                     ;
 
 //
 // Submodule instances.
@@ -281,6 +321,13 @@ xc_malu_long i_xc_malu_long (
 .rs1            (rs1                ), //
 .rs2            (rs2                ), //
 .rs3            (rs3                ), //
+.fsm_init       (fsm_init           ),
+.fsm_mdr        (fsm_mdr            ),
+.fsm_msub_1     (fsm_msub_1         ),
+.fsm_macc_1     (fsm_macc_1         ),
+.fsm_mmul_1     (fsm_mmul_1         ),
+.fsm_mmul_2     (fsm_mmul_2         ),
+.fsm_done       (fsm_done           ),
 .acc            (acc                ),
 .carry          (carry              ),
 .count          (count              ),

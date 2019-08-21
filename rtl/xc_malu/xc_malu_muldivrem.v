@@ -104,6 +104,7 @@ wire [63:0]  divrem_result       = result_div ? div_result : rem_result;
 wire [31:0]  pmul_padd_lhs       ; // Left hand input
 wire [31:0]  pmul_padd_rhs       ; // Right hand input.
 wire [ 0:0]  pmul_padd_sub       ; // Subtract if set, else add.
+wire         pmul_padd_cen       ;
 wire [63:0]  pmul_n_acc          ;
 wire [31:0]  pmul_n_arg_0        ;
 wire [31:0]  pmul_n_arg_1        ;

@@ -5,11 +5,37 @@
 //  Module responsible for handline atomic parts of the multi-precision
 //  arithmetic instructions.
 //
+// 
+// xc.madd.3
+// - acc <= r1  + r2 + r3[0]
+// 
+// xc.msub.3
+// - acc[31:0] <= r1  - r2
+// - acc[31:0] <= acc[31:0] - r3[0]
+// 
+// xc.macc
+// - {carry, acc[31:0]} <= r2 + r3; acc[63:32] <= r1
+// - acc[63:32] <= acc[63:32] + carry;
+// 
+// xc.mmul.3
+// - acc <= rs1 * rs2
+// - {carry, acc[31:0]} <= acc[31:0] + r3; 
+// - acc[63:32] <= acc[63:32] + carry;
+// 
+//
 module xc_malu_long (
 
 input  wire [31:0]  rs1             , //
 input  wire [31:0]  rs2             , //
 input  wire [31:0]  rs3             , //
+
+input  wire         fsm_init        ,
+input  wire         fsm_mdr         ,
+input  wire         fsm_msub_1      ,
+input  wire         fsm_macc_1      ,
+input  wire         fsm_mmul_1      ,
+input  wire         fsm_mmul_2      ,
+input  wire         fsm_done        ,
 
 input  wire [63:0]  acc             ,
 input  wire [ 0:0]  carry           ,
@@ -35,9 +61,28 @@ output wire         ready
 
 );
 
-assign padd_lhs     = {32{uop_madd}} & rs1;
 
-assign padd_rhs     = {32{uop_madd}} & rs2;
+//
+// xc.msub
+
+wire [31:0] msub_lhs_0 = rs1;
+wire [31:0] msub_lhs_1 = acc[31:0];
+
+wire [31:0] msub_rhs_0 = rs2;
+wire [31:0] msub_rhs_1 = {31'b0, rs3[0]};
+
+wire [31:0] msub_lhs   = fsm_init ? msub_lhs_0 : msub_lhs_1;
+wire [31:0] msub_rhs   = fsm_init ? msub_rhs_0 : msub_rhs_1;
+
+//
+// padd signal selection
+// -----------------------------------------------------
+
+assign padd_lhs     = {32{uop_madd}} & rs1      |
+                      {32{uop_msub}} & msub_lhs ;
+
+assign padd_rhs     = {32{uop_madd}} & rs2      |
+                      {32{uop_msub}} & msub_rhs ;
 
 assign padd_sub     = uop_msub;
 
@@ -47,9 +92,11 @@ assign padd_cin     = uop_msub                      ||
 assign n_carry      = uop_mmul && padd_cout[31]     ||
                       uop_madd && padd_cout[31]     ;
 
-assign n_acc        = {acc[63:32], padd_result};
+assign n_acc        = {64{uop_madd}} & {acc[63:32], padd_result}           |
+                      {64{uop_msub}} & {31'b0,padd_result[31], padd_result};
 
-assign result       = {64{uop_madd}} & {31'b0, padd_cout[31], padd_result};
+assign result       = {64{uop_madd}} & {31'b0, padd_cout[31], padd_result} |
+                      {64{uop_msub}} & {acc                              } ;
 
 assign ready        = uop_madd;
 
