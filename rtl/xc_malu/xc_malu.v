@@ -71,7 +71,7 @@ wire         do_divu         = uop_divu  ; //
 wire         do_rem          = uop_rem   ; //
 wire         do_remu         = uop_remu  ; //
 wire         do_mul          = uop_mul   ; //
-wire         do_mulu         = uop_mulu  ; //
+wire         do_mulu         = uop_mulu  || (uop_mmul && fsm_init || fsm_mmul_1);
 wire         do_mulsu        = uop_mulsu ; //
 wire         do_clmul        = uop_clmul ; //
 wire         do_pmul         = uop_pmul  ; //
@@ -108,19 +108,19 @@ assign       result  = {64{insn_mdr }} &  mdr_result |
 // Packed Adder Interface
 // -----------------------------------------------------------------
 
-wire [31:0] padd_lhs = {32{insn_mdr }} &  mdr_padd_lhs |
+wire [31:0] padd_lhs = {32{ld_mdr   }} &  mdr_padd_lhs |
                        {32{insn_long}} & long_padd_lhs ;
                        
-wire [31:0] padd_rhs = {32{insn_mdr }} &  mdr_padd_rhs |
+wire [31:0] padd_rhs = {32{ld_mdr   }} &  mdr_padd_rhs |
                        {32{insn_long}} & long_padd_rhs ;
                        
-wire        padd_sub =     insn_mdr   &&  mdr_padd_sub ||
+wire        padd_sub =     ld_mdr     &&  mdr_padd_sub ||
                            insn_long  && long_padd_sub ;
                        
-wire        padd_cin =     insn_mdr   &&  mdr_padd_cin ||
+wire        padd_cin =     ld_mdr     &&  mdr_padd_cin ||
                            insn_long  && long_padd_cin ;
                       
-wire        padd_cen =     insn_mdr   &&  mdr_padd_cen ||
+wire        padd_cen =     ld_mdr     &&  mdr_padd_cen ||
                            insn_long  &&          1'b1 ;
 
 wire [ 4:0] padd_pw  = {pw_2, pw_4, pw_8, pw_16, pw_32};
@@ -132,16 +132,17 @@ wire [31:0] padd_result ;
 // Control FSM
 // -----------------------------------------------------------------
 
-reg [6:0] fsm;
-reg [6:0] n_fsm;
+reg [7:0] fsm;
+reg [7:0] n_fsm;
 
-localparam FSM_INIT     = 7'b0000001;
-localparam FSM_MDR      = 7'b0000010;
-localparam FSM_MSUB_1   = 7'b0000100;
-localparam FSM_MACC_1   = 7'b0001000;
-localparam FSM_MMUL_1   = 7'b0010000;
-localparam FSM_MMUL_2   = 7'b0100000;
-localparam FSM_DONE     = 7'b1000000;
+localparam FSM_INIT     = 8'b00000001;
+localparam FSM_MDR      = 8'b00000010;
+localparam FSM_MSUB_1   = 8'b00000100;
+localparam FSM_MACC_1   = 8'b00001000;
+localparam FSM_MMUL_1   = 8'b00010000;
+localparam FSM_MMUL_2   = 8'b00100000;
+localparam FSM_MMUL_3   = 8'b01000000;
+localparam FSM_DONE     = 8'b10000000;
 
 wire fsm_init   = fsm[0];
 wire fsm_mdr    = fsm[1];
@@ -149,16 +150,17 @@ wire fsm_msub_1 = fsm[2];
 wire fsm_macc_1 = fsm[3];
 wire fsm_mmul_1 = fsm[4];
 wire fsm_mmul_2 = fsm[5];
-wire fsm_done   = fsm[6];
+wire fsm_mmul_3 = fsm[6];
+wire fsm_done   = fsm[7];
 
 always @(*) begin case(fsm)
 
     FSM_INIT: begin
         if(valid) begin
-            if     (insn_mdr             ) n_fsm <= FSM_MDR   ;
+            if     (insn_mdr && !uop_mmul) n_fsm <= FSM_MDR   ;
             else if(uop_msub             ) n_fsm <= FSM_MSUB_1;
             else if(uop_macc             ) n_fsm <= FSM_MACC_1;
-            else if(uop_mmul && mdr_ready) n_fsm <= FSM_MMUL_1;
+            else if(uop_mmul             ) n_fsm <= FSM_MMUL_1;
         end else begin
             n_fsm <= FSM_INIT  ;
         end
@@ -178,10 +180,15 @@ always @(*) begin case(fsm)
     end
     
     FSM_MMUL_1: begin
-        n_fsm <= FSM_MMUL_2;
+        if(mdr_ready) n_fsm <= FSM_MMUL_2;
+        else          n_fsm <= FSM_MMUL_1;
     end
     
     FSM_MMUL_2: begin
+        n_fsm <= FSM_MMUL_3;
+    end
+    
+    FSM_MMUL_3: begin
         n_fsm <= FSM_DONE;
     end
     
@@ -206,25 +213,31 @@ end
 
 reg  [ 5:0] count    ;   // State / step counter.
 wire [ 5:0] n_count  = count + 1;
-wire        count_en = fsm_mdr;
+wire        count_en = fsm_mdr || (fsm_init && uop_mmul && valid);
 
 reg  [63:0] acc         ; // Accumulator
 
-wire [63:0] n_acc    = {64{insn_mdr }} &  mdr_n_acc  |
-                       {64{insn_long}} & long_n_acc  ;
+// Route outputs of MDR instruction into registers. Can happen even if
+// there isn't an MDR instruction executing, as in the case of xc.mmul.
+wire        ld_mdr   = insn_mdr  ||  ((fsm_init||fsm_mmul_1) && uop_mmul);
+wire        ld_long  = insn_long && !((fsm_init||fsm_mmul_1) && uop_mmul);
+
+wire [63:0] n_acc    = {64{ld_mdr   }} &  mdr_n_acc  |
+                       {64{ld_long  }} & long_n_acc  ;
                      
 reg  [31:0] arg_0       ; // Misc intermediate variable
 
-wire [31:0] n_arg_0  = {32{insn_mdr }} &  mdr_n_arg_0;
+wire [31:0] n_arg_0  = {32{ld_mdr   }} &  mdr_n_arg_0;
                      
-reg  [31:0] arg_1       ; // Misc intermediate variable
+reg  [31:0] arg_1       ; // Misc intermediate variable. Div/Rem Quotient.
 
 wire [31:0] n_arg_1  = {32{insn_mdr }} &  mdr_n_arg_1;
 
 reg         carry       ;
 wire        n_carry  = insn_long && long_n_carry     ;
 
-wire        ld_on_init = insn_divrem || insn_long;
+wire        ld_on_init = insn_divrem || (insn_long && !uop_mmul);
+
 wire        reg_ld_en  = count_en               ||
                          insn_long              ;
 
@@ -240,6 +253,9 @@ always @(posedge clock) begin
         arg_0 <= ld_on_init ? n_arg_0 : rs2   ;
         arg_1 <= 0;
         carry <= n_carry;
+        if(count_en) begin
+            count <= n_count;
+        end
     end else if(reg_ld_en && !ready && !fsm_done && valid) begin
         count <= n_count;
         acc   <= n_acc  ;

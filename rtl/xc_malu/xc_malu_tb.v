@@ -94,7 +94,7 @@ endtask
 
 always @(posedge clock) begin
 
-    dut_operation <= $unsigned($random) % 13;
+    dut_operation <= $unsigned($random) % 14;
     dut_pw        <= $unsigned($random) %  4;
 
     if(!resetn) begin
@@ -122,9 +122,9 @@ always @(posedge clock) begin
         dut_pw_4       <= 0;
         dut_pw_2       <= 0;
     end else if(!dut_valid || (dut_valid && dut_ready)) begin
-        dut_rs1        <= $random & 32'hFFFFFFFF;
-        dut_rs2        <= $random & 32'hFFFFFFFF;
-        dut_rs3        <= $random & 32'hFFFFFFFF;
+        dut_rs1        <= $random & 32'hF000000F;
+        dut_rs2        <= $random & 32'hF000000F;
+        dut_rs3        <= $random & 32'hF000000F;
         dut_valid      <= n_dut_valid     ;
         dut_uop_div    <= n_dut_uop_div   ;
         dut_uop_divu   <= n_dut_uop_divu  ;
@@ -343,7 +343,8 @@ if( dut_uop_macc  ) begin
 end
 
 if( dut_uop_mmul  ) begin
-    // TODO
+    expected_result = (dut_rs1 * dut_rs2) + dut_rs3;
+    check_expected(expected_result);
 end
 
 end

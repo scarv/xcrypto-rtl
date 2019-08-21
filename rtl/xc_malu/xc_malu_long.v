@@ -90,7 +90,21 @@ wire [63:0] macc_acc_0 = {31'b0         , padd_result  };
 wire [63:0] macc_acc_1 = {padd_result   , acc[31:0]    };
 wire [63:0] macc_n_acc = fsm_init ? macc_acc_0 : macc_acc_1;
 
-wire [31:0] macc_carry = padd_cout[31];
+//
+// xc.mmul
+
+wire [31:0] mmul_lhs_0 = rs3;
+wire [31:0] mmul_lhs_1 = acc[63:32];
+
+wire [31:0] mmul_rhs_0 = acc[31:0];
+wire [31:0] mmul_rhs_1 = {31'b0, carry};
+
+wire [31:0] mmul_lhs   = fsm_mmul_2 ? mmul_lhs_0 : mmul_lhs_1;
+wire [31:0] mmul_rhs   = fsm_mmul_2 ? mmul_rhs_0 : mmul_rhs_1;
+
+wire [63:0] mmul_acc_0 = {acc[63:32]    , padd_result  };
+wire [63:0] mmul_acc_1 = {padd_result   , acc[31:0]    };
+wire [63:0] mmul_n_acc = fsm_mmul_2 ? mmul_acc_0 : mmul_acc_1;
 
 //
 // padd signal selection
@@ -98,11 +112,13 @@ wire [31:0] macc_carry = padd_cout[31];
 
 assign padd_lhs     = {32{uop_madd}} & rs1      |
                       {32{uop_msub}} & msub_lhs |
-                      {32{uop_macc}} & macc_lhs ;
+                      {32{uop_macc}} & macc_lhs |
+                      {32{uop_mmul}} & mmul_lhs ;
 
 assign padd_rhs     = {32{uop_madd}} & rs2      |
                       {32{uop_msub}} & msub_rhs |
-                      {32{uop_macc}} & macc_rhs ;
+                      {32{uop_macc}} & macc_rhs |
+                      {32{uop_mmul}} & mmul_rhs ;
 
 assign padd_sub     = uop_msub;
 
@@ -113,11 +129,13 @@ assign n_carry      = padd_cout[31]                 ;
 
 assign n_acc        = {64{uop_madd}} & {acc[63:32], padd_result}           |
                       {64{uop_msub}} & {31'b0,padd_result[31], padd_result}|
-                      {64{uop_macc}} & {macc_n_acc                        };
+                      {64{uop_macc}} & {macc_n_acc                        }|
+                      {64{uop_mmul}} & {mmul_n_acc                        };
 
 assign result       = {64{uop_madd}} & {31'b0, padd_cout[31], padd_result} |
                       {64{uop_msub}} & {acc                              } |
-                      {64{uop_macc}} & {acc                              } ;
+                      {64{uop_macc}} & {acc                              } |
+                      {64{uop_mmul}} & {acc                              } ;
 
 assign ready        = uop_madd;
 

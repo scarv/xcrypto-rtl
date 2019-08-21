@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.86 (w)1999-2017 BSI
-[*] Wed Aug 21 10:20:00 2019
+[*] Wed Aug 21 10:59:46 2019
 [*]
 [dumpfile] "/home/ben/work/xcrypto-rtl/build/xc_malu/xc_malu.vcd"
-[dumpfile_mtime] "Wed Aug 21 10:17:49 2019"
-[dumpfile_size] 10555573
+[dumpfile_mtime] "Wed Aug 21 10:58:54 2019"
+[dumpfile_size] 1494548
 [savefile] "/home/ben/work/xcrypto-rtl/rtl/xc_malu/xc_malu.gtkw"
-[timestart] 131429
+[timestart] 18324
 [size] 1920 1025
 [pos] -1 -1
-*-5.616375 131642 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-7.916875 18482 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] xc_malu_tb.
 [treeopen] xc_malu_tb.i_dut.
 [treeopen] xc_malu_tb.i_dut.i_malu_muldivrem.
@@ -63,6 +63,8 @@ xc_malu_tb.dut_rs3[31:0]
 xc_malu_tb.dut_result[63:0]
 xc_malu_tb.expected_result[63:0]
 xc_malu_tb.expected_result_pmul[63:0]
+@28
+xc_malu_tb.i_dut.ld_mdr
 @800200
 -Adder
 @28
@@ -96,16 +98,7 @@ xc_malu_tb.i_dut.i_p_addsub.sub
 -DUT: xc_malu
 @28
 xc_malu_tb.i_dut.clock
-@22
-xc_malu_tb.i_dut.acc[63:0]
-xc_malu_tb.i_dut.arg_0[31:0]
-xc_malu_tb.i_dut.arg_1[31:0]
-@28
-xc_malu_tb.i_dut.carry
-xc_malu_tb.i_dut.n_carry
-@25
-xc_malu_tb.i_dut.count[5:0]
-@28
+xc_malu_tb.i_dut.ready
 xc_malu_tb.i_dut.count_en
 xc_malu_tb.i_dut.do_clmul
 xc_malu_tb.i_dut.do_div
@@ -120,8 +113,26 @@ xc_malu_tb.i_dut.do_remu
 xc_malu_tb.i_dut.flush
 xc_malu_tb.i_dut.fsm_init
 xc_malu_tb.i_dut.fsm_mdr
+xc_malu_tb.i_dut.fsm_macc_1
+xc_malu_tb.i_dut.fsm_msub_1
+xc_malu_tb.i_dut.fsm_mmul_1
+xc_malu_tb.i_dut.fsm_mmul_2
+xc_malu_tb.i_dut.fsm_done
 xc_malu_tb.i_dut.insn_divrem
 xc_malu_tb.i_dut.insn_mdr
+xc_malu_tb.i_dut.ld_mdr
+@22
+xc_malu_tb.i_dut.acc[63:0]
+xc_malu_tb.i_dut.arg_0[31:0]
+xc_malu_tb.i_dut.arg_1[31:0]
+@28
+xc_malu_tb.i_dut.carry
+xc_malu_tb.i_dut.n_carry
+@24
+xc_malu_tb.i_dut.count[5:0]
+xc_malu_tb.i_dut.n_count[5:0]
+@28
+xc_malu_tb.i_dut.reg_ld_en
 @22
 xc_malu_tb.i_dut.mdr_n_acc[63:0]
 xc_malu_tb.i_dut.mdr_n_arg_0[31:0]
@@ -140,7 +151,6 @@ xc_malu_tb.i_dut.mdr_result[63:0]
 xc_malu_tb.i_dut.n_acc[63:0]
 xc_malu_tb.i_dut.n_arg_0[31:0]
 xc_malu_tb.i_dut.n_arg_1[31:0]
-xc_malu_tb.i_dut.n_count[5:0]
 @28
 xc_malu_tb.i_dut.padd_cen
 xc_malu_tb.i_dut.padd_cin
@@ -152,18 +162,25 @@ xc_malu_tb.i_dut.padd_result[31:0]
 xc_malu_tb.i_dut.padd_rhs[31:0]
 @28
 xc_malu_tb.i_dut.padd_sub
+@c00200
+-PW
+@28
 xc_malu_tb.i_dut.pw_2
 xc_malu_tb.i_dut.pw_4
 xc_malu_tb.i_dut.pw_8
 xc_malu_tb.i_dut.pw_16
 xc_malu_tb.i_dut.pw_32
+@1401200
+-PW
+@28
 xc_malu_tb.i_dut.ready
-xc_malu_tb.i_dut.resetn
 @22
 xc_malu_tb.i_dut.result[63:0]
 xc_malu_tb.i_dut.rs1[31:0]
 xc_malu_tb.i_dut.rs2[31:0]
 xc_malu_tb.i_dut.rs3[31:0]
+@c00200
+-uop
 @28
 xc_malu_tb.i_dut.uop_clmul
 xc_malu_tb.i_dut.uop_div
@@ -179,10 +196,13 @@ xc_malu_tb.i_dut.uop_pclmul
 xc_malu_tb.i_dut.uop_pmul
 xc_malu_tb.i_dut.uop_rem
 xc_malu_tb.i_dut.uop_remu
+@1401200
+-uop
+@28
 xc_malu_tb.i_dut.valid
 @1000200
 -DUT: xc_malu
-@800200
+@c00200
 -DUT: xc_malu_long
 @22
 xc_malu_tb.i_dut.i_xc_malu_long.acc[63:0]
@@ -227,9 +247,9 @@ xc_malu_tb.i_dut.i_xc_malu_long.uop_macc
 xc_malu_tb.i_dut.i_xc_malu_long.uop_madd
 xc_malu_tb.i_dut.i_xc_malu_long.uop_mmul
 xc_malu_tb.i_dut.i_xc_malu_long.uop_msub
-@1000200
+@1401200
 -DUT: xc_malu_long
-@c00200
+@800200
 -DUT: xc_malu_muldivrem
 @22
 xc_malu_tb.i_dut.i_malu_muldivrem.acc[63:0]
@@ -239,6 +259,8 @@ xc_malu_tb.i_dut.i_malu_muldivrem.arg_1[31:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.clock
 @24
 xc_malu_tb.i_dut.i_malu_muldivrem.count[5:0]
+@c00200
+-DIV
 @22
 xc_malu_tb.i_dut.i_malu_muldivrem.div_result[63:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.divrem_result[63:0]
@@ -255,6 +277,9 @@ xc_malu_tb.i_dut.i_malu_muldivrem.div_ready
 xc_malu_tb.i_dut.i_malu_muldivrem.div_result[63:0]
 @28
 xc_malu_tb.i_dut.i_malu_muldivrem.div_signed
+@1401200
+-DIV
+@28
 xc_malu_tb.i_dut.i_malu_muldivrem.do_clmul
 xc_malu_tb.i_dut.i_malu_muldivrem.do_div
 xc_malu_tb.i_dut.i_malu_muldivrem.do_divu
@@ -266,6 +291,7 @@ xc_malu_tb.i_dut.i_malu_muldivrem.do_pmul
 xc_malu_tb.i_dut.i_malu_muldivrem.do_rem
 xc_malu_tb.i_dut.i_malu_muldivrem.do_remu
 xc_malu_tb.i_dut.i_malu_muldivrem.flush
+xc_malu_tb.i_dut.i_malu_muldivrem.valid
 xc_malu_tb.i_dut.i_malu_muldivrem.mul_carryless
 xc_malu_tb.i_dut.i_malu_muldivrem.mul_lhs_sign
 @22
@@ -298,6 +324,8 @@ xc_malu_tb.i_dut.i_malu_muldivrem.padd_result[31:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.padd_rhs[31:0]
 @28
 xc_malu_tb.i_dut.i_malu_muldivrem.padd_sub
+@c00200
+-PMUL
 @22
 xc_malu_tb.i_dut.i_malu_muldivrem.pmul_n_acc[63:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.pmul_n_arg_0[31:0]
@@ -314,6 +342,9 @@ xc_malu_tb.i_dut.i_malu_muldivrem.pw_4
 xc_malu_tb.i_dut.i_malu_muldivrem.pw_8
 xc_malu_tb.i_dut.i_malu_muldivrem.pw_16
 xc_malu_tb.i_dut.i_malu_muldivrem.pw_32
+@1401200
+-PMUL
+@28
 xc_malu_tb.i_dut.i_malu_muldivrem.ready
 xc_malu_tb.i_dut.i_malu_muldivrem.resetn
 @22
@@ -321,18 +352,18 @@ xc_malu_tb.i_dut.i_malu_muldivrem.result[63:0]
 @28
 xc_malu_tb.i_dut.i_malu_muldivrem.result_div
 xc_malu_tb.i_dut.i_malu_muldivrem.result_rem
+@29
 xc_malu_tb.i_dut.i_malu_muldivrem.route_div
+@28
 xc_malu_tb.i_dut.i_malu_muldivrem.route_mul
 xc_malu_tb.i_dut.i_malu_muldivrem.route_pmul
 @22
 xc_malu_tb.i_dut.i_malu_muldivrem.rs1[31:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.rs2[31:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.rs3[31:0]
-@28
-xc_malu_tb.i_dut.i_malu_muldivrem.valid
-@1401200
+@1000200
 -DUT: xc_malu_muldivrem
-@c00200
+@800200
 -DUT: xc_malu_mul
 @c00024
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.count[5:0]
@@ -377,7 +408,7 @@ xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.padd_rhs[31:0]
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.padd_sub
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.rhs_sign
 xc_malu_tb.i_dut.i_malu_muldivrem.i_xc_malu_mul.sub_last
-@1401200
+@1000200
 -DUT: xc_malu_mul
 @c00200
 -DUT: xc_malu_divrem
