@@ -37,15 +37,14 @@ output wire         ready
 );
 
 reg         div_run     ;
-reg         div_done    ;
 
-assign      ready       = div_done;
+assign      ready       = div_finished;
 
 wire        signed_lhs  = (op_signed) && rs1[31];
 wire        signed_rhs  = (op_signed) && rs2[31];
 
-wire        div_start   = valid     && !div_run && !div_done;
-wire        div_finished= (div_run && count == 31) || div_done;
+wire        div_start   = valid     && !div_run;
+wire        div_finished= (div_run && count == 32);
 
 wire [31:0] qmask       = (32'b1<<31  ) >> count  ;
 
@@ -61,8 +60,7 @@ wire [63:0] divisor_start =
 
 
 assign      n_acc       = div_start    ? divisor_start  :
-                         !div_finished ? acc >> 1       :
-                                         acc            ;
+                                         acc >> 1       ;
 
 assign      n_arg_0     = div_start ? (signed_lhs ? -rs1 : rs1) :
                           div_less  ? padd_result               :
@@ -75,24 +73,17 @@ assign      n_arg_1     = div_start           ? 0               :
 always @(posedge clock) begin
     if(!resetn   || flush) begin
         
-        div_done <= 1'b0;
         div_run  <= 1'b0;
-
-    end else if(div_done) begin
-        
-        div_done <= !flush;
 
     end else if(div_start) begin
         
         div_run  <= 1'b1;
-        div_done <= 1'b0;
 
     end else if(div_run) begin
 
         if(div_finished) begin
 
             div_run  <= 1'b0;
-            div_done <= 1'b1;
 
         end
 

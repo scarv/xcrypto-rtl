@@ -102,26 +102,26 @@ wire         long_ready        ;
 // -----------------------------------------------------------------
 
 assign       result  = {64{insn_mdr }} &  mdr_result |
-                       {64{insn_long}} & long_result ;
+                       {64{ld_long  }} & long_result ;
 
 //
 // Packed Adder Interface
 // -----------------------------------------------------------------
 
 wire [31:0] padd_lhs = {32{ld_mdr   }} &  mdr_padd_lhs |
-                       {32{insn_long}} & long_padd_lhs ;
+                       {32{ld_long  }} & long_padd_lhs ;
                        
 wire [31:0] padd_rhs = {32{ld_mdr   }} &  mdr_padd_rhs |
-                       {32{insn_long}} & long_padd_rhs ;
+                       {32{ld_long  }} & long_padd_rhs ;
                        
 wire        padd_sub =     ld_mdr     &&  mdr_padd_sub ||
-                           insn_long  && long_padd_sub ;
+                           ld_long    && long_padd_sub ;
                        
 wire        padd_cin =     ld_mdr     &&  mdr_padd_cin ||
-                           insn_long  && long_padd_cin ;
+                           ld_long    && long_padd_cin ;
                       
 wire        padd_cen =     ld_mdr     &&  mdr_padd_cen ||
-                           insn_long  &&          1'b1 ;
+                           ld_long    &&          1'b1 ;
 
 wire [ 4:0] padd_pw  = {pw_2, pw_4, pw_8, pw_16, pw_32};
 
@@ -231,7 +231,7 @@ wire [31:0] n_arg_0  = {32{ld_mdr   }} &  mdr_n_arg_0;
                      
 reg  [31:0] arg_1       ; // Misc intermediate variable. Div/Rem Quotient.
 
-wire [31:0] n_arg_1  = {32{insn_mdr }} &  mdr_n_arg_1;
+wire [31:0] n_arg_1  =                    mdr_n_arg_1;
 
 reg         carry       ;
 wire        n_carry  = insn_long && long_n_carry     ;
@@ -251,7 +251,7 @@ always @(posedge clock) begin
     end else if(fsm_init && valid) begin
         acc   <= ld_on_init ? n_acc  : 0     ;
         arg_0 <= ld_on_init ? n_arg_0 : rs2   ;
-        arg_1 <= 0;
+        arg_1 <= n_arg_1;
         carry <= n_carry;
         if(count_en) begin
             count <= n_count;

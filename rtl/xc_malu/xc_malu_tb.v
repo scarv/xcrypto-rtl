@@ -19,7 +19,7 @@ reg          resetn          ;
 
 integer     test_count   = 0;
 integer     clock_ticks  = 0;
-parameter   max_ticks    = 10000;
+parameter   max_ticks    = 100000;
 
 // Initial values
 initial begin
@@ -122,9 +122,9 @@ always @(posedge clock) begin
         dut_pw_4       <= 0;
         dut_pw_2       <= 0;
     end else if(!dut_valid || (dut_valid && dut_ready)) begin
-        dut_rs1        <= $random & 32'hF000000F;
-        dut_rs2        <= $random & 32'hF000000F;
-        dut_rs3        <= $random & 32'hF000000F;
+        dut_rs1        <= $random & 32'hFFFFFFFF;
+        dut_rs2        <= $random & 32'hFFFFFFFF;
+        dut_rs3        <= $random & 32'hFFFFFFFF;
         dut_valid      <= n_dut_valid     ;
         dut_uop_div    <= n_dut_uop_div   ;
         dut_uop_divu   <= n_dut_uop_divu  ;

@@ -97,9 +97,11 @@ wire [31:0]  div_n_arg_0         ;
 wire [31:0]  div_n_arg_1         ;
 wire         div_ready           ;
 
-wire [63:0]  div_result          = div_outsign ? -arg_1 : arg_1;
-wire [63:0]  rem_result          = rem_outsign ? -arg_0 : arg_0;
-wire [63:0]  divrem_result       = result_div ? div_result : rem_result;
+wire [31:0]  arg_sel             = result_div ? arg_1 : arg_0;
+wire         arg_sel_neg         = div_outsign && result_div ||
+                                   rem_outsign && result_rem ;
+
+wire [63:0]  divrem_result       = arg_sel_neg ? -arg_sel : arg_sel;
 
 wire [31:0]  pmul_padd_lhs       ; // Left hand input
 wire [31:0]  pmul_padd_rhs       ; // Right hand input.
@@ -123,7 +125,7 @@ assign n_arg_0  = {32{route_pmul}} & pmul_n_arg_0  |
                   {32{route_mul }} &  mul_n_arg_0  |
                   {32{route_div }} &  div_n_arg_0  ;
 
-assign n_arg_1  = {32{route_div }} &  div_n_arg_1  ;
+assign n_arg_1  =                     div_n_arg_1  ;
 
 assign padd_lhs = {32{route_pmul}} & pmul_padd_lhs |
                   {32{route_mul }} &  mul_padd_lhs |
