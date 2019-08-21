@@ -23,12 +23,6 @@ input  wire [63:0]  acc             , // Divisor
 input  wire [31:0]  arg_0           , // Dividend
 input  wire [31:0]  arg_1           , // Quotient
 
-output wire [31:0]  padd_lhs        , // Left hand input
-output wire [31:0]  padd_rhs        , // Right hand input.
-output wire [ 0:0]  padd_sub        , // Subtract if set, else add.
-input  wire [31:0]  padd_cout       , // Carry bits
-input  wire [31:0]  padd_result     , // Result of the operation
-
 output wire [63:0]  n_acc           ,
 output wire [31:0]  n_arg_0         ,
 output wire [31:0]  n_arg_1         ,
@@ -50,9 +44,7 @@ wire [31:0] qmask       = (32'b1<<31  ) >> count  ;
 
 wire        div_less    = acc <= {32'b0,arg_0};
 
-assign      padd_lhs    = arg_0;
-assign      padd_rhs    = acc [31:0];
-assign      padd_sub    = 1'b1;
+wire [31:0] sub_result = arg_0 - acc[31:0];
         
 
 wire [63:0] divisor_start = 
@@ -63,7 +55,7 @@ assign      n_acc       = div_start    ? divisor_start  :
                                          acc >> 1       ;
 
 assign      n_arg_0     = div_start ? (signed_lhs ? -rs1 : rs1) :
-                          div_less  ? padd_result               :
+                          div_less  ? sub_result                :
                                       arg_0                     ;
 
 assign      n_arg_1     = div_start           ? 0               :

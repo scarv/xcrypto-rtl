@@ -128,26 +128,21 @@ assign n_arg_0  = {32{route_pmul}} & pmul_n_arg_0  |
 assign n_arg_1  =                     div_n_arg_1  ;
 
 assign padd_lhs = {32{route_pmul}} & pmul_padd_lhs |
-                  {32{route_mul }} &  mul_padd_lhs |
-                  {32{route_div }} &  div_padd_lhs ;
+                  {32{route_mul }} &  mul_padd_lhs ;
 
 assign padd_rhs = {32{route_pmul}} & pmul_padd_rhs |
-                  {32{route_mul }} &  mul_padd_rhs |
-                  {32{route_div }} &  div_padd_rhs ;
+                  {32{route_mul }} &  mul_padd_rhs ;
 
 assign padd_sub =     route_pmul  && pmul_padd_sub ||
-                      route_mul   &&  mul_padd_sub ||
-                      route_div   &&  div_padd_sub ;
+                      route_mul   &&  mul_padd_sub  ;
 
 assign padd_cin =     route_mul   &&  mul_padd_cin ||
-                      route_div   &&  1'b0         ||
                       route_pmul  &&  1'b0         ;
 
 assign padd_cen =     route_mul   &&  mul_padd_cen ||
-                      route_div   &&  1'b1         ||
                       route_pmul  &&  pmul_padd_cen;
 
-assign result   = {64{route_pmul}} & pmul_result   |
+assign result   =                    pmul_result   |
                   {64{route_mul }} &  mul_result   |
                   {64{route_div }} & divrem_result ;
 
@@ -208,11 +203,6 @@ xc_malu_divrem i_xc_malu_divrem (
 .acc        (acc         ), // Divisor
 .arg_0      (arg_0       ), // Dividend
 .arg_1      (arg_1       ), // Quotient
-.padd_lhs   (div_padd_lhs), // Left hand input
-.padd_rhs   (div_padd_rhs), // Right hand input.
-.padd_sub   (div_padd_sub), // Subtract if set, else add.
-.padd_cout  (padd_cout   ), // Carry bits
-.padd_result(padd_result ), // Result of the operation
 .n_acc      (div_n_acc   ),
 .n_arg_0    (div_n_arg_0 ),
 .n_arg_1    (div_n_arg_1 ),

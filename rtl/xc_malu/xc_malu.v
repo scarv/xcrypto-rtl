@@ -101,26 +101,26 @@ wire         long_ready        ;
 // Result Multiplexing
 // -----------------------------------------------------------------
 
-assign       result  = {64{insn_mdr }} &  mdr_result |
-                       {64{ld_long  }} & long_result ;
+assign       result  =                    mdr_result |
+                                         long_result ;
 
 //
 // Packed Adder Interface
 // -----------------------------------------------------------------
 
-wire [31:0] padd_lhs = {32{ld_mdr   }} &  mdr_padd_lhs |
+wire [31:0] padd_lhs =                    mdr_padd_lhs |
                        {32{ld_long  }} & long_padd_lhs ;
                        
-wire [31:0] padd_rhs = {32{ld_mdr   }} &  mdr_padd_rhs |
+wire [31:0] padd_rhs =                    mdr_padd_rhs |
                        {32{ld_long  }} & long_padd_rhs ;
                        
-wire        padd_sub =     ld_mdr     &&  mdr_padd_sub ||
+wire        padd_sub =                    mdr_padd_sub ||
                            ld_long    && long_padd_sub ;
                        
-wire        padd_cin =     ld_mdr     &&  mdr_padd_cin ||
+wire        padd_cin =                    mdr_padd_cin ||
                            ld_long    && long_padd_cin ;
                       
-wire        padd_cen =     ld_mdr     &&  mdr_padd_cen ||
+wire        padd_cen =                    mdr_padd_cen ||
                            ld_long    &&          1'b1 ;
 
 wire [ 4:0] padd_pw  = {pw_2, pw_4, pw_8, pw_16, pw_32};
