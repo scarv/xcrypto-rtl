@@ -69,7 +69,8 @@ endef
 define tgt_sim_build
 ${1} : ${2}
 	@mkdir -p $(dir ${1})
-	iverilog -g2012 -DWAVE_FILE=$(basename ${1}).vcd -s ${3} -Wall -o ${1} ${2}
+	iverilog -g2012 -DWAVE_FILE=$(basename ${1}).vcd \
+        -Wimplicit -Wselect-range -s ${3} -o ${1} ${2}
 build_sim_${3} :  ${1}
 ALL_TARGETS += ${1}
 endef
