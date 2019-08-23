@@ -62,18 +62,33 @@ implementations of XCrypto.
 This is a list of the modules in the repository and a rough
 estimate of their gate count, as per an example Yosys CMOS flow.
 
-Module Name     | Instructions Implemented  | Yosys CMOS Gate Count
-----------------|---------------------------|------------------------------
-`b_bop`         | `xc.bop`                  | 737
-`b_lut`         | `xc.lut`                  | 1280
-`p_addsub`      | `xc.padd`,`xc.psub`       | 554
-`p_shfrot`      | `xc.psrl[.i]`,`xc.psll[.i]`,`xc.prot[.i]` | 1244
-`p_mul`         | `xc.pmul.[l,h]`,`xc.clmul.[l,h]` | 2565 (554 from `p_addsub`)
-`xc_sha3`       | `xc.sha3.[xy,x1,x2,x4,yx]` | 446
-`xc_sha256`     | `xc.sha256.s[0,1,2,3]` | 931
-`xc_sha512`     | `xc.sha512.s[0,1,2,3]` | 2018
-`xc_aessub`     | `xc.aessub.[enc,dec][rot]` | 4210 (single cycle)
-`xc_aesmix`     | `xc.aesmix.[enc,dec]` | 2158 (single cycle)
+Module Name | Yosys CMOS Gate Count | Instructions Implemented
+------------|-----------------------|-------------------------------
+`b_bop`     | 737                   | `xc.bop`
+`b_lut`     | 1280                  | `xc.lut`
+`p_addsub`  | 603                   | `xc.padd`,`xc.psub`
+`p_shfrot`  | 1244                  | `xc.psrl[.i]`,`xc.psll[.i]`,`xc.prot[.i]`
+`p_mul`     | 2614 (See note 1)     | `xc.pmul.[l,h]`,`xc.clmul.[l,h]`
+`xc_sha3`   | 296                   | `xc.sha3.[xy,x1,x2,x4,yx]`
+`xc_sha256` | 931                   | `xc.sha256.s[0,1,2,3]`
+`xc_sha512` | 2018                  | `xc.sha512.s[0,1,2,3]`
+`xc_aessub` | 4210 (single cycle)   | `xc.aessub.[enc,dec][rot]`
+`xc_aesmix` | 2097 (single cycle)   | `xc.aesmix.[enc,dec]`
+`xc_malu`   | 6666 (see note 2)     | See note 3.
+
+
+1. 554 gates contributed by subinstance of `p_addsub`. Multi-cycle
+   implementation.
+  `xc.macc`, `xc.mmul.3`
+
+2. Multi-cycle implementation optimised for minimal area.
+
+3. `xc.pmul.[l,h]`, `xc.pclmul.[l,h]`,
+   `clmul[h]`,
+   `mul`, mulh`, `mulhu`, `mulhsu`,
+   `div`, divu`,
+   `xc.madd.3`, `xc.msub.3`
+ 
 
 ---
 
