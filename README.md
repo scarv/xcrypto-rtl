@@ -85,8 +85,8 @@ Module Name | Yosys CMOS Gate Count | Instructions Implemented
 
 3. `xc.pmul.[l,h]`, `xc.pclmul.[l,h]`,
    `clmul[h]`,
-   `mul`, mulh`, `mulhu`, `mulhsu`,
-   `div`, divu`,
+   `mul`, `mulh`, `mulhu`, `mulhsu`,
+   `div`, `divu`,
    `xc.madd.3`, `xc.msub.3`
  
 
