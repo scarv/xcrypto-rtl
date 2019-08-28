@@ -32,7 +32,7 @@ input  wire [31:0]  padd_cout       ,
 input  wire [31:0]  padd_result     ,
 
 output wire [63:0]  n_acc           ,
-output wire [32:0]  n_arg_0         ,
+output wire [31:0]  n_arg_0         ,
 output wire         ready           
 
 );

@@ -157,45 +157,47 @@ always @(*) begin case(fsm)
 
     FSM_INIT: begin
         if(valid) begin
-            if     (insn_mdr && !uop_mmul) n_fsm <= FSM_MDR   ;
-            else if(uop_msub             ) n_fsm <= FSM_MSUB_1;
-            else if(uop_macc             ) n_fsm <= FSM_MACC_1;
-            else if(uop_mmul             ) n_fsm <= FSM_MMUL_1;
+            if     (insn_mdr && !uop_mmul) n_fsm = FSM_MDR   ;
+            else if(uop_msub             ) n_fsm = FSM_MSUB_1;
+            else if(uop_macc             ) n_fsm = FSM_MACC_1;
+            else if(uop_mmul             ) n_fsm = FSM_MMUL_1;
         end else begin
-            n_fsm <= FSM_INIT  ;
+            n_fsm = FSM_INIT  ;
         end
     end
     
     FSM_MDR  : begin
-        if(mdr_ready) n_fsm <= FSM_DONE ;
-        else          n_fsm <= FSM_MDR  ;
+        if(mdr_ready) n_fsm = FSM_DONE ;
+        else          n_fsm = FSM_MDR  ;
     end
     
     FSM_MSUB_1: begin
-        n_fsm <= FSM_DONE;
+        n_fsm = FSM_DONE;
     end
     
     FSM_MACC_1: begin
-        n_fsm <= FSM_DONE;
+        n_fsm = FSM_DONE;
     end
     
     FSM_MMUL_1: begin
-        if(mdr_ready) n_fsm <= FSM_MMUL_2;
-        else          n_fsm <= FSM_MMUL_1;
+        if(mdr_ready) n_fsm = FSM_MMUL_2;
+        else          n_fsm = FSM_MMUL_1;
     end
     
     FSM_MMUL_2: begin
-        n_fsm <= FSM_MMUL_3;
+        n_fsm = FSM_MMUL_3;
     end
     
     FSM_MMUL_3: begin
-        n_fsm <= FSM_DONE;
+        n_fsm = FSM_DONE;
     end
     
     FSM_DONE  : begin
         // Stay in this state until flush is assertd.
-        n_fsm <= FSM_DONE;
+        n_fsm = FSM_DONE;
     end
+
+    default: n_fsm = FSM_INIT;
 
 endcase end
 

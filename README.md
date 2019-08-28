@@ -74,7 +74,7 @@ Module Name | Yosys CMOS Gate Count | Instructions Implemented
 `xc_sha512` | 2018                  | `xc.sha512.s[0,1,2,3]`
 `xc_aessub` | 4210 (single cycle)   | `xc.aessub.[enc,dec][rot]`
 `xc_aesmix` | 2097 (single cycle)   | `xc.aesmix.[enc,dec]`
-`xc_malu`   | 6666 (see note 2)     | See note 3.
+`xc_malu`   | 6680 (see note 2)     | See note 3.
 
 
 1. 554 gates contributed by subinstance of `p_addsub`. Multi-cycle

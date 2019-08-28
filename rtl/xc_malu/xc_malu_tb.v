@@ -275,25 +275,25 @@ always @(posedge clock) if(dut_valid && dut_ready) begin
 if( dut_uop_div   ) begin
     if(dut_rs2== 0) expected_result = 64'hFFFFFFFF;
     else            expected_result = $signed(dut_rs1) / $signed(dut_rs2);
-    check_expected(expected_result);
+    check_expected(expected_result & 64'hFFFFFFFF);
 end
 
 if( dut_uop_divu  ) begin
     if(dut_rs2== 0) expected_result = 64'hFFFFFFFF;
     else            expected_result = $unsigned(dut_rs1) / $unsigned(dut_rs2);
-    check_expected(expected_result);
+    check_expected(expected_result & 64'hFFFFFFFF);
 end
 
 if( dut_uop_rem   ) begin
     if(dut_rs2== 0) expected_result = dut_rs1;
     else            expected_result = $signed(dut_rs1) % $signed(dut_rs2);
-    check_expected(expected_result);
+    check_expected(expected_result & 64'hFFFFFFFF);
 end
 
 if( dut_uop_remu  ) begin
     if(dut_rs2== 0) expected_result = dut_rs1;
     else            expected_result = $unsigned(dut_rs1) % $unsigned(dut_rs2);
-    check_expected(expected_result);
+    check_expected(expected_result & 64'hFFFFFFFF);
 end
 
 if( dut_uop_mul   ) begin

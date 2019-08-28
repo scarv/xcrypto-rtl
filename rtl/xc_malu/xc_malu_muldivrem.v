@@ -78,7 +78,7 @@ wire         mul_padd_sub        ; // Packed adder subtract?
 wire         mul_padd_cin        ; // Packed adder carry in
 wire         mul_padd_cen        ; // Packed adder carry enable.
 wire [63:0]  mul_n_acc           ;
-wire [32:0]  mul_n_arg_0         ;
+wire [31:0]  mul_n_arg_0         ;
 wire         mul_ready           ;
 wire [63:0]  mul_result   = acc;
 
@@ -101,7 +101,7 @@ wire [31:0]  arg_sel             = result_div ? arg_1 : arg_0;
 wire         arg_sel_neg         = div_outsign && result_div ||
                                    rem_outsign && result_rem ;
 
-wire [63:0]  divrem_result       = arg_sel_neg ? -arg_sel : arg_sel;
+wire [63:0]  divrem_result       = {32'b0,arg_sel_neg ? -arg_sel : arg_sel};
 
 wire [31:0]  pmul_padd_lhs       ; // Left hand input
 wire [31:0]  pmul_padd_rhs       ; // Right hand input.

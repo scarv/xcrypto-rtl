@@ -48,7 +48,7 @@ wire [31:0] sub_result = arg_0 - acc[31:0];
         
 
 wire [63:0] divisor_start = 
-    {(signed_rhs ? -{{32{rs2[31]}},rs2} : {32'b0,rs2}), 31'b0};
+    {(signed_rhs ? -{rs2[31],rs2} : {1'b0,rs2}), 31'b0};
 
 
 assign      n_acc       = div_start    ? divisor_start  :

@@ -36,7 +36,7 @@ output wire         ready
 
 );
 
-wire [5:0] counter_finish = {pw_16,pw_8,pw_4,pw_2,1'b0};
+wire [5:0] counter_finish = {1'b0,pw_16,pw_8,pw_4,pw_2,1'b0};
 
 assign n_arg_0   = {1'b0, arg_0[31:1]};
 
