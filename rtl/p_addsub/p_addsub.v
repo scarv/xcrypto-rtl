@@ -14,7 +14,7 @@ input  wire [ 0:0]  cin             , // Carry in bit.
 input  wire [ 0:0]  sub             , // Subtract if set, else add.
 
 input  wire         c_en            , // Carry enable bits.
-output wire [31:0]  c_out           , // Carry bits
+output wire [32:0]  c_out           , // Carry bits
 output wire [31:0]  result            // Result of the operation
 
 );
@@ -33,6 +33,8 @@ wire pw_2  = pw[4];
 wire [31:0] carry_mask;
 wire [32:0] carry_chain;
 /* verilator lint_on UNOPTFLAT */
+
+assign c_out[32] = carry_chain[32];
 
 // Carry in IFF subtracting or forcing a carry in.
 assign      carry_chain[0] = sub || cin;

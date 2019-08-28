@@ -125,7 +125,7 @@ wire        padd_cen =                    mdr_padd_cen ||
 
 wire [ 4:0] padd_pw  = {pw_2, pw_4, pw_8, pw_16, pw_32};
 
-wire [31:0] padd_cout   ;
+wire [32:0] padd_cout   ;
 wire [31:0] padd_result ;
 
 //

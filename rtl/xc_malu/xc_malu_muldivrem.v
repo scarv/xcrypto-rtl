@@ -52,7 +52,7 @@ output wire         padd_sub        , // Packed adder subtract?
 output wire         padd_cin        , // Packed adder carry in
 output wire         padd_cen        , // Packed adder carry enable.
 
-input  wire [31:0]  padd_cout       ,
+input  wire [32:0]  padd_cout       ,
 input  wire [31:0]  padd_result     ,
 
 output wire [63:0]  result          , // 64-bit result

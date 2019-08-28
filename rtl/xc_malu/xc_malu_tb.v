@@ -332,8 +332,8 @@ if( dut_uop_madd  ) begin
 end
 
 if( dut_uop_msub  ) begin
-    expected_result = ((dut_rs1 - dut_rs2) - dut_rs3[0]);
-    expected_result = {31'b0, expected_result[31],expected_result[31:0]};
+    expected_result = ((dut_rs1 - dut_rs2) - {31'b0,dut_rs3[0]});
+    expected_result = expected_result & 64'h0000_0001_FFFF_FFFF;
     check_expected(expected_result);
 end
 

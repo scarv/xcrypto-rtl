@@ -24,7 +24,7 @@ output wire [31:0]  padd_rhs        , // Right hand input.
 output wire [ 0:0]  padd_sub        , // Subtract if set, else add.
 output wire         padd_cen        ,
 
-input       [31:0]  padd_cout       , // Carry bits
+input       [32:0]  padd_cout       , // Carry bits
 input       [31:0]  padd_result     , // Result of the operation
 
 output wire [63:0]  n_acc   ,
@@ -161,7 +161,7 @@ assign        padd_sub    = 1'b0;
 wire [31:0] cadd_carry  = 32'b0; //
 
 wire [31:0] add_result =  padd_result;
-wire [31:0] add_carry  =  padd_cout  ;
+wire [31:0] add_carry  =  padd_cout [31:0] ;
 
 wire [63:0] n_acc_16 = 
                         {add_carry[31],add_result[31:16],acc[47:33], 

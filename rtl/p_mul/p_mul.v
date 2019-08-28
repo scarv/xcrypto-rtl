@@ -34,7 +34,7 @@ wire [31:0]   padd_rhs    ; // Right hand input.
 wire [ 4:0]   padd_pw     ; // Pack width to operate on
 wire [ 0:0]   padd_sub    ; // Subtract if set, else add.
 
-wire [31:0]   padd_carry  ; // Carry bits
+wire [32:0]   padd_carry  ; // Carry bits
 wire [31:0]   padd_result ; // Result of the operation
 
 //
@@ -104,7 +104,7 @@ output wire [31:0] padd_rhs    , // Right hand input.
 output wire [ 4:0] padd_pw     , // Pack width to operate on
 output wire [ 0:0] padd_sub    , // Subtract if set, else add.
 
-input       [31:0] padd_carry  , // Carry bits
+input       [32:0] padd_carry  , // Carry bits
 input       [31:0] padd_result   // Result of the operation
 
 );
@@ -221,8 +221,8 @@ wire [31:0] cadd_carry  = 32'b0; //
 
 assign cadd_result = padd_lhs ^ padd_rhs;
 
-wire [31:0] add_result =  clmul ? cadd_result : padd_result;
-wire [31:0] add_carry  =  clmul ? cadd_carry  : padd_carry ;
+wire [31:0] add_result =  clmul ? cadd_result : padd_result      ;
+wire [31:0] add_carry  =  clmul ? cadd_carry  : padd_carry[31:0] ;
 
 wire [63:0] n_psum_32 = {add_carry[31],add_result,psum[31:1]};
 

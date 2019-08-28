@@ -46,7 +46,7 @@ output wire [31:0]  padd_rhs        , // Right hand input.
 output wire         padd_cin        , // Carry in bit.
 output wire [ 0:0]  padd_sub        , // Subtract if set, else add.
 
-input       [31:0]  padd_cout       , // Carry bits
+input       [32:0]  padd_cout       , // Carry bits
 input       [31:0]  padd_result     , // Result of the operation
 
 input  wire         uop_madd        , //
@@ -65,14 +65,18 @@ output wire         ready
 //
 // xc.msub
 
-wire [31:0] msub_lhs_0 = rs1;
-wire [31:0] msub_lhs_1 = acc[31:0];
+wire [32:0] msub_lhs_0 = {1'b0,rs1};
+wire [32:0] msub_lhs_1 = acc[32:0];
 
-wire [31:0] msub_rhs_0 = rs2;
-wire [31:0] msub_rhs_1 = {31'b0, rs3[0]};
+wire [32:0] msub_rhs_0 = {1'b0,rs2};
+wire [32:0] msub_rhs_1 = {32'b0, rs3[0]};
 
-wire [31:0] msub_lhs   = fsm_msub_1 ? msub_lhs_1 : msub_lhs_0;
-wire [31:0] msub_rhs   = fsm_msub_1 ? msub_rhs_1 : msub_rhs_0;
+wire [32:0] msub_lhs   = fsm_msub_1 ? msub_lhs_1 : msub_lhs_0;
+wire [32:0] msub_rhs   = fsm_msub_1 ? msub_rhs_1 : msub_rhs_0;
+
+// TODO: Re-use the padd interface.
+wire [32:0] sub_result = $unsigned(msub_lhs) - 
+                         $unsigned(msub_rhs) ;
 
 //
 // xc.macc
@@ -111,26 +115,23 @@ wire [63:0] mmul_n_acc = fsm_mmul_2 ? mmul_acc_0 : mmul_acc_1;
 // -----------------------------------------------------
 
 assign padd_lhs     = {32{uop_madd}} & rs1      |
-                      {32{uop_msub}} & msub_lhs |
                       {32{uop_macc}} & macc_lhs |
                       {32{uop_mmul}} & mmul_lhs ;
 
 assign padd_rhs     = {32{uop_madd}} & rs2      |
-                      {32{uop_msub}} & msub_rhs |
                       {32{uop_macc}} & macc_rhs |
                       {32{uop_mmul}} & mmul_rhs ;
 
-assign padd_sub     = uop_msub;
+assign padd_sub     = 1'b0;
 
-assign padd_cin     = uop_msub                          ||
-                      uop_madd  && rs3[0]               ;
+assign padd_cin     = uop_madd  && rs3[0]               ;
 
-assign n_carry      = padd_cout[31]                 ;
+assign n_carry      = padd_cout[32]                 ;
 
-assign n_acc        = {64{uop_madd}} & {acc[63:32], padd_result}           |
-                      {64{uop_msub}} & {31'b0,padd_result[31], padd_result}|
-                      {64{uop_macc}} & {macc_n_acc                        }|
-                      {64{uop_mmul}} & {mmul_n_acc                        };
+assign n_acc        = {64{uop_madd}} & {acc[63:32], padd_result} |
+                      {64{uop_msub}} & {31'b0, sub_result      } |
+                      {64{uop_macc}} & {macc_n_acc             } |
+                      {64{uop_mmul}} & {mmul_n_acc             } ;
 
 wire   result_acc   = uop_msub || uop_macc || uop_mmul;
 
