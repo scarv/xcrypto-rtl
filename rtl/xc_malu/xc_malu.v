@@ -153,7 +153,11 @@ wire fsm_mmul_2 = fsm[5];
 wire fsm_mmul_3 = fsm[6];
 wire fsm_done   = fsm[7];
 
-always @(*) begin case(fsm)
+always @(*) begin 
+    
+    n_fsm = FSM_INIT;
+
+case(fsm)
 
     FSM_INIT: begin
         if(valid) begin
