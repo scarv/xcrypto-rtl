@@ -43,9 +43,9 @@ wire [31:0] gpr_rs1_rdata  ;
 wire [31:0] gpr_rs2_rdata  ;
 wire [31:0] gpr_rs3_rdata  ;
 
-wire [31:0] fwd_0_d = fwd_0_addr[0] ? fwd_0_wdata_hi : fwd_0_wdata;
-wire [31:0] fwd_1_d = fwd_1_addr[0] ? fwd_1_wdata_hi : fwd_1_wdata;
-wire [31:0] fwd_gpr = rd_addr   [0] ? rd_wdata_hi    : rd_wdata   ;
+wire [31:0] fwd_0_d = fwd_0_wide && fwd_0_addr[0] ? fwd_0_wdata_hi : fwd_0_wdata;
+wire [31:0] fwd_1_d = fwd_1_wide && fwd_1_addr[0] ? fwd_1_wdata_hi : fwd_1_wdata;
+wire [31:0] fwd_gpr = rd_wide    && rd_addr   [0] ? rd_wdata_hi    : rd_wdata   ;
 
 wire    fwd_rs1_0 = rs1_addr[4:1] == fwd_0_addr[4:1] && |rs1_addr;
 wire    fwd_rs2_0 = rs2_addr[4:1] == fwd_0_addr[4:1] && |rs2_addr;

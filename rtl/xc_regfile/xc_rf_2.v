@@ -28,9 +28,9 @@ input  wire [31:0] rd_wdata
 reg [31:0] gprs_even [15:0];
 reg [31:0] gprs_odd  [15:0];
 
-assign rs1_rdata = rs1_addr[0] ? gprs_even[rs1_addr[4:1]] : gprs_odd[rs1_addr[4:1]];
-assign rs2_rdata = rs2_addr[0] ? gprs_even[rs2_addr[4:1]] : gprs_odd[rs2_addr[4:1]];
-assign rs3_rdata = rs3_addr[0] ? gprs_even[rs3_addr[4:1]] : gprs_odd[rs3_addr[4:1]];
+assign rs1_rdata = rs1_addr[0] ? gprs_odd[rs1_addr[4:1]] : gprs_even[rs1_addr[4:1]];
+assign rs2_rdata = rs2_addr[0] ? gprs_odd[rs2_addr[4:1]] : gprs_even[rs2_addr[4:1]];
+assign rs3_rdata = rs3_addr[0] ? gprs_odd[rs3_addr[4:1]] : gprs_even[rs3_addr[4:1]];
 
 wire        rd_odd  =  rd_addr[0];
 wire        rd_even = !rd_addr[0];
