@@ -16,7 +16,7 @@ output wire [31:0] result  //
 
 
 wire [ 3:0] lut_arr [15:0];
-wire [63:0] lut_con = {crs3, crs2};
+wire [63:0] lut_con = {crs1, crs2};
 
 genvar i;
 generate for (i = 0; i < 16; i = i + 1) begin
@@ -29,7 +29,7 @@ end endgenerate
 genvar j;
 generate for (j = 0; j < 8; j = j + 1) begin
 
-    assign result[4*j+3:4*j] = lut_arr[crs1[4*j+3:4*j]];
+    assign result[4*j+3:4*j] = lut_arr[crs3[4*j+3:4*j]];
 
 end endgenerate
 
