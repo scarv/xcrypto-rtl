@@ -170,6 +170,11 @@ xc_malu_mul i_xc_malu_mul (
 .acc        (acc            ),
 .arg_0      (arg_0          ),
 .carryless  (mul_carryless  ),
+.pw_32      (pw_32          ), // 32-bit width packed elements.
+.pw_16      (pw_16          ), // 16-bit width packed elements.
+.pw_8       (pw_8           ), //  8-bit width packed elements.
+.pw_4       (pw_4           ), //  4-bit width packed elements.
+.pw_2       (pw_2           ), //  2-bit width packed elements.
 .lhs_sign   (mul_lhs_sign   ),
 .rhs_sign   (mul_rhs_sign   ),
 .padd_lhs   (mul_padd_lhs   ), // Packed adder left input

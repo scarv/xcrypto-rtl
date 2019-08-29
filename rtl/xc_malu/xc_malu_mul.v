@@ -19,6 +19,12 @@ input  wire [31:0]  arg_0           ,
 
 input  wire         carryless       ,
 
+input  wire         pw_32           , // 32-bit width packed elements.
+input  wire         pw_16           , // 16-bit width packed elements.
+input  wire         pw_8            , //  8-bit width packed elements.
+input  wire         pw_4            , //  4-bit width packed elements.
+input  wire         pw_2            , //  2-bit width packed elements.
+
 input  wire         lhs_sign        ,
 input  wire         rhs_sign        ,
 
@@ -37,7 +43,7 @@ output wire         ready
 
 );
 
-assign ready             = count == 32;
+assign ready             = count == {pw_32, pw_16, pw_8, pw_4, pw_2,1'b0};
 
 wire          add_en     = arg_0[0];
 
