@@ -20,7 +20,7 @@ genvar i;
 generate for(i = 0; i < 32; i = i + 1) begin
 
     wire [2:0] idx = {
-        rd[i], rs1[i], rs2[i]
+        rd[i], rs2[i], rs1[i]
     };
 
     assign result[i] = lut[idx];
