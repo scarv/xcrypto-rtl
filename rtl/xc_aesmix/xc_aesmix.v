@@ -9,6 +9,8 @@ module xc_aesmix(
 input  wire        clock ,
 input  wire        reset ,
 
+input  wire        flush , // Flush state ready for next set of inputs.
+
 input  wire        valid , // Are the inputs valid?
 input  wire [31:0] rs1   , // Input source register 1
 input  wire [31:0] rs2   , // Input source register 2
@@ -18,9 +20,8 @@ output wire [31:0] result  //
 
 );
 
-//
-// Always complete in a single cycle.
-assign ready = valid;
+// Single cycle implementation (set) or 4-cycle implementation (clear).
+parameter FAST = 1'b1;
 
 //
 // Multiply by 2 in GF(2^8) modulo 8'h1b
@@ -54,35 +55,169 @@ function [7:0] xtimeN;
 
 endfunction
 
-
 //
-// Mix Encrypt instruction logic
+// Encrypt inputs
 wire [7:0] e0 = rs1[ 7: 0] & {8{valid && enc}};
 wire [7:0] e1 = rs1[15: 8] & {8{valid && enc}};
 wire [7:0] e2 = rs2[23:16] & {8{valid && enc}};
 wire [7:0] e3 = rs2[31:24] & {8{valid && enc}};
 
-wire [7:0] mix_enc_0 = xtime2(e0) ^ xtime3(e1) ^ e2 ^ e3;
-wire [7:0] mix_enc_1 = xtime2(e1) ^ xtime3(e2) ^ e0 ^ e3;
-wire [7:0] mix_enc_2 = xtime2(e2) ^ xtime3(e3) ^ e0 ^ e1;
-wire [7:0] mix_enc_3 = xtime2(e3) ^ xtime3(e0) ^ e1 ^ e2;
-
-wire [31:0] result_enc = {mix_enc_3, mix_enc_2, mix_enc_1, mix_enc_0};
-
 //
-// Mix Decrypt instruction logic
-
+// Decrypt inputs
 wire [7:0] d0 = rs1[ 7: 0] & {8{valid && !enc}};
 wire [7:0] d1 = rs1[15: 8] & {8{valid && !enc}};
 wire [7:0] d2 = rs2[23:16] & {8{valid && !enc}};
 wire [7:0] d3 = rs2[31:24] & {8{valid && !enc}};
 
+wire [31:0] result_enc;
+wire [31:0] result_dec;
+
+generate if(FAST == 1'b1) begin
+
+//
+// Single Cycle Implementation
+// ------------------------------------------------------------
+
+//
+// Always complete in a single cycle.
+assign ready = valid;
+
+//
+// Mix Encrypt instruction logic
+wire [7:0] mix_enc_0 = xtime2(e0) ^ xtime3(e1) ^ e2 ^ e3;
+wire [7:0] mix_enc_1 = xtime2(e1) ^ xtime3(e2) ^ e0 ^ e3;
+wire [7:0] mix_enc_2 = xtime2(e2) ^ xtime3(e3) ^ e0 ^ e1;
+wire [7:0] mix_enc_3 = xtime2(e3) ^ xtime3(e0) ^ e1 ^ e2;
+
+assign result_enc = {mix_enc_3, mix_enc_2, mix_enc_1, mix_enc_0};
+
+//
+// Mix Decrypt instruction logic
 wire [7:0] mix_dec_0 = xtimeN(d0,4'he)^xtimeN(d1,4'hb)^xtimeN(d2,4'hd)^xtimeN(d3,4'h9);
 wire [7:0] mix_dec_1 = xtimeN(d0,4'h9)^xtimeN(d1,4'he)^xtimeN(d2,4'hb)^xtimeN(d3,4'hd);
 wire [7:0] mix_dec_2 = xtimeN(d0,4'hd)^xtimeN(d1,4'h9)^xtimeN(d2,4'he)^xtimeN(d3,4'hb);
 wire [7:0] mix_dec_3 = xtimeN(d0,4'hb)^xtimeN(d1,4'hd)^xtimeN(d2,4'h9)^xtimeN(d3,4'he);
 
-wire [31:0] result_dec = {mix_dec_3, mix_dec_2, mix_dec_1, mix_dec_0};
+assign result_dec = {mix_dec_3, mix_dec_2, mix_dec_1, mix_dec_0};
+
+end else begin // (FAST == 0)
+
+//
+// Multi-Cycle Implementation
+// ------------------------------------------------------------
+
+reg  [1:0] fsm     ;
+wire [1:0] n_fsm   = fsm + 1 ;
+
+wire       fsm_0   = fsm == 0;
+wire       fsm_1   = fsm == 1;
+wire       fsm_2   = fsm == 2;
+wire       fsm_3   = fsm == 3;
+
+assign     ready   = fsm_3;
+
+reg [7:0]  b_0; // Per-byte results
+reg [7:0]  b_1; // 
+reg [7:0]  b_2; // 
+wire[7:0]  b_3 = step_out;
+
+//
+// Encryption
+
+wire [7:0] enc_x0_in    = {8{fsm_0 || fsm_1}} & e3  |
+                          {8{fsm_2         }} & e1  |
+                          {8{fsm_3         }} & e2  ;
+
+wire [7:0] enc_x1_in    = {8{fsm_0         }} & e2  |
+                          {8{fsm_1 || fsm_2}} & e0  |
+                          {8{fsm_3         }} & e1  ;
+
+wire [7:0] enc_x2_in    = {8{fsm_0         }} & e0  |
+                          {8{fsm_1         }} & e1  |
+                          {8{fsm_2         }} & e2  |
+                          {8{fsm_3         }} & e3  ;
+
+wire [7:0] enc_x3_in    = {8{fsm_0         }} & e1  |
+                          {8{fsm_1         }} & e2  |
+                          {8{fsm_2         }} & e3  |
+                          {8{fsm_3         }} & e0  ;
+
+wire [7:0] enc_x2_out   = xtime2(enc_x2_in);
+wire [7:0] enc_x3_out   = xtime3(enc_x3_in);
+
+wire [7:0] enc_byte     = enc_x3_out ^ enc_x2_out ^ enc_x1_in ^ enc_x0_in;
+
+//
+// Decryption
+
+wire [3:0] dec_0_rhs    = {4{fsm_0}} & 4'he |
+                          {4{fsm_1}} & 4'h9 |
+                          {4{fsm_2}} & 4'hd |
+                          {4{fsm_3}} & 4'hb ;
+
+wire [3:0] dec_1_rhs    = {4{fsm_0}} & 4'hb |
+                          {4{fsm_1}} & 4'he |
+                          {4{fsm_2}} & 4'h9 |
+                          {4{fsm_3}} & 4'hd ;
+
+wire [3:0] dec_2_rhs    = {4{fsm_0}} & 4'hd |
+                          {4{fsm_1}} & 4'hb |
+                          {4{fsm_2}} & 4'he |
+                          {4{fsm_3}} & 4'h9 ;
+
+wire [3:0] dec_3_rhs    = {4{fsm_0}} & 4'h9 |
+                          {4{fsm_1}} & 4'hd |
+                          {4{fsm_2}} & 4'hb |
+                          {4{fsm_3}} & 4'he ;
+
+wire [7:0] dec_0_out    = xtimeN(d0, dec_0_rhs);
+wire [7:0] dec_1_out    = xtimeN(d1, dec_1_rhs);
+wire [7:0] dec_2_out    = xtimeN(d2, dec_2_rhs);
+wire [7:0] dec_3_out    = xtimeN(d3, dec_3_rhs);
+
+wire [7:0] dec_byte     = dec_0_out ^ dec_1_out ^ dec_2_out ^ dec_3_out;
+
+//
+// Result collection
+
+wire [7:0] step_out     = enc ? enc_byte : dec_byte;
+
+assign     result_enc       = {b_3, b_2, b_1, b_0};
+assign     result_dec       = {b_3, b_2, b_1, b_0};
+
+always @(posedge clock) begin
+    if(reset) begin
+        b_0 <= 0;
+    end else if(fsm_0 && valid) begin
+        b_0 <= step_out;
+    end
+end
+
+always @(posedge clock) begin
+    if(reset) begin
+        b_1 <= 0;
+    end else if(fsm_1 && valid) begin
+        b_1 <= step_out;
+    end
+end
+
+always @(posedge clock) begin
+    if(reset) begin
+        b_2 <= 0;
+    end else if(fsm_2 && valid) begin
+        b_2 <= step_out;
+    end
+end
+
+always @(posedge clock) begin
+    if(reset || flush) begin
+        fsm <= 0;
+    end else if(valid && !ready) begin
+        fsm <= n_fsm;
+    end
+end
+
+end endgenerate
 
 //
 // Create the final result.

@@ -35,7 +35,7 @@ endef
 define tgt_bmc
 bmc_${1} : ${2} cov_${1}
 	$(YOSYS_SMTBMC) \
-        -t 5 \
+        -t 7 \
         --dump-vcd ${3} \
         -s boolector \
         -m ${1} \

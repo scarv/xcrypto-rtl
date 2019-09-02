@@ -6,23 +6,48 @@ input reset
 
 );
 
+wire        flush = valid && dut_ready; // Flush internal state
 reg         valid = $anyseq; // Are the inputs valid?
 reg [31:0]  rs1   = $anyseq; // Input source register 1
 reg [31:0]  rs2   = $anyseq; // Input source register 2
 reg         enc   = $anyseq; // Perform encrypt (set) or decrypt (clear).
+reg         dut_sel=$anyconst;
 
-wire        dut_ready ; // Is the instruction complete?
-wire [31:0] dut_result; // 
+initial     assume(reset == 1'b1);
+initial     assume(valid == 1'b0);
 
-wire        grm_ready ; // Is the instruction complete?
-wire [31:0] grm_result; // 
+always @(posedge clock) begin
+    if($past(valid) && !$past(dut_ready)) begin
+        assume($stable(valid));
+        assume($stable(rs1));
+        assume($stable(rs2));
+        assume($stable(enc));
+        assume($stable(enc));
+    end
+end
+
+wire        dut_0_ready ; //
+wire [31:0] dut_0_result; // 
+wire        dut_1_ready ; //
+wire [31:0] dut_1_result; // 
+
+wire        dut_ready   = dut_sel ? dut_1_ready  : dut_0_ready ;
+wire [31:0] dut_result  = dut_sel ? dut_1_result : dut_0_result;
+
+wire        grm_ready   ; // Is the instruction complete?
+wire [31:0] grm_result  ; // 
 
 //
 // Correctness assertions.
 always @(posedge clock) begin
     // Assume that the GRM computes the result immediately. Hence, if
     // the DUT is ready, the GRM is also ready.
-    if(!reset && valid && dut_ready) begin
+    if(!reset && valid && dut_ready &&  dut_sel) begin
+        assert(grm_result == dut_result);
+        cover (grm_result == dut_result);
+    end
+    
+    if(!reset && valid && dut_ready && !dut_sel) begin
         assert(grm_result == dut_result);
         cover (grm_result == dut_result);
     end
@@ -55,16 +80,35 @@ xc_aesmix_checker i_grm(
 );
 
 //
-// DUT model instance
-xc_aesmix i_dut(
+// DUT model instance - FAST
+xc_aesmix #(
+.FAST(1'b1)
+) i_dut_0(
 .clock (clock     ),
 .reset (reset     ),
+.flush (flush     ), //
 .valid (valid     ), // Are the inputs valid?
 .rs1   (rs1       ), // Input source register 1
 .rs2   (rs2       ), // Input source register 2
 .enc   (enc       ), // Perform encrypt (set) or decrypt (clear).
-.ready (dut_ready ), // Is the instruction complete?
-.result(dut_result)  // 
+.ready (dut_1_ready ), // Is the instruction complete?
+.result(dut_1_result)  // 
+);
+
+//
+// DUT model instance - Area optimised
+xc_aesmix #(
+.FAST(1'b0)
+) i_dut_1(
+.clock (clock     ),
+.reset (reset     ),
+.flush (flush     ), //
+.valid (valid     ), // Are the inputs valid?
+.rs1   (rs1       ), // Input source register 1
+.rs2   (rs2       ), // Input source register 2
+.enc   (enc       ), // Perform encrypt (set) or decrypt (clear).
+.ready (dut_0_ready ), // Is the instruction complete?
+.result(dut_0_result)  // 
 );
 
 endmodule
@@ -79,7 +123,7 @@ input  wire        reset ,
 input  wire        valid , // Are the inputs valid?
 input  wire [31:0] rs1   , // Input source register 1
 input  wire [31:0] rs2   , // Input source register 2
-input  wire [31:0] enc   , // Perform encrypt (set) or decrypt (clear).
+input  wire        enc   , // Perform encrypt (set) or decrypt (clear).
 output wire        ready , // Is the instruction complete?
 output wire [31:0] result  // 
 
