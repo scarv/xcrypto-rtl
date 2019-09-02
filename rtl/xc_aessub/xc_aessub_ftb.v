@@ -12,8 +12,18 @@ reg [31:0]  rs2   = $anyseq; // Input source register 2
 reg         enc   = $anyseq; // Perform encrypt (set) or decrypt (clear).
 reg         rot   = $anyseq; // Perform Rotation (set) or not (clear)
 
-wire        dut_ready ; // Is the instruction complete?
-wire [31:0] dut_result; // 
+initial     assume(reset == 1'b1);
+
+wire        dut_sel = $anyconst;
+
+wire        dut_0_ready ; // Is the instruction complete?
+wire [31:0] dut_0_result; // 
+
+wire        dut_1_ready ; // Is the instruction complete?
+wire [31:0] dut_1_result; // 
+
+wire        dut_ready  = dut_sel ? dut_1_ready  : dut_0_ready  ;
+wire [31:0] dut_result = dut_sel ? dut_1_result : dut_0_result ;
 
 wire        grm_ready ; // Is the instruction complete?
 wire [31:0] grm_result; // 
@@ -23,7 +33,27 @@ wire [31:0] grm_result; //
 always @(posedge clock) begin
     // Assume that the GRM computes the result immediately. Hence, if
     // the DUT is ready, the GRM is also ready.
-    if(!reset && valid && dut_ready) begin
+    if(!reset && valid && dut_ready && dut_sel) begin // DUT 1
+        if(enc) begin
+            if(rot) begin
+                assert(grm_result == dut_result);
+                cover (grm_result == dut_result);
+            end else begin
+              assert(grm_result == dut_result);
+              cover (grm_result == dut_result);
+            end
+        end else begin
+            if(rot) begin
+                assert(grm_result == dut_result);
+                cover (grm_result == dut_result);
+            end else begin
+                assert(grm_result == dut_result);
+                cover (grm_result == dut_result);
+            end
+        end
+    end
+    
+    if(!reset && valid && dut_ready && !dut_sel) begin // DUT 0
         if(enc) begin
             if(rot) begin
                 assert(grm_result == dut_result);
@@ -58,17 +88,35 @@ always @(posedge clock) begin
 end
 
 //
-// DUT instantation
-xc_aessub i_dut(
-.clock (clock     ),
-.reset (reset     ),
-.valid (valid     ), // Are the inputs valid?
-.rs1   (rs1       ), // Input source register 1
-.rs2   (rs2       ), // Input source register 2
-.enc   (enc       ), // Perform encrypt (set) or decrypt (clear).
-.rot   (rot       ), // Perform encrypt (set) or decrypt (clear).
-.ready (dut_ready ), // Is the instruction complete?
-.result(dut_result)  // 
+// DUT 0 instantation - FAST
+xc_aessub #(
+.FAST(1'b1)
+) i_dut_0(
+.clock (clock       ),
+.reset (reset       ),
+.valid (valid       ), // Are the inputs valid?
+.rs1   (rs1         ), // Input source register 1
+.rs2   (rs2         ), // Input source register 2
+.enc   (enc         ), // Perform encrypt (set) or decrypt (clear).
+.rot   (rot         ), // Perform encrypt (set) or decrypt (clear).
+.ready (dut_0_ready ), // Is the instruction complete?
+.result(dut_0_result)  // 
+);
+
+//
+// DUT 1 instantation - Area optimised
+xc_aessub #(
+.FAST(1'b0)
+) i_dut_1(
+.clock (clock       ),
+.reset (reset       ),
+.valid (valid       ), // Are the inputs valid?
+.rs1   (rs1         ), // Input source register 1
+.rs2   (rs2         ), // Input source register 2
+.enc   (enc         ), // Perform encrypt (set) or decrypt (clear).
+.rot   (rot         ), // Perform encrypt (set) or decrypt (clear).
+.ready (dut_1_ready ), // Is the instruction complete?
+.result(dut_1_result)  // 
 );
 
 //

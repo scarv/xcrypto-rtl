@@ -47,7 +47,7 @@ endef
 define tgt_cover
 cov_${1} : ${2}
 	$(YOSYS_SMTBMC) \
-        -t 5 -c \
+        -t 7 -c \
         --dump-vcd ${3} \
         -s boolector \
         -m ${1} \
@@ -58,7 +58,7 @@ endef
 define tgt_trace
 trs_${1} : ${2}
 	$(YOSYS_SMTBMC) \
-        -t 5 -g \
+        -t 7 -g \
         --dump-vcd ${3} \
         -s boolector \
         -m ${1} \
