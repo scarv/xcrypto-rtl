@@ -6,6 +6,7 @@ input reset
 
 );
 
+wire        flush = valid && dut_ready; // Flush internal state
 reg         valid = $anyseq; // Are the inputs valid?
 reg [31:0]  rs1   = $anyseq; // Input source register 1
 reg [31:0]  rs2   = $anyseq; // Input source register 2
@@ -13,6 +14,16 @@ reg         enc   = $anyseq; // Perform encrypt (set) or decrypt (clear).
 reg         rot   = $anyseq; // Perform Rotation (set) or not (clear)
 
 initial     assume(reset == 1'b1);
+
+always @(posedge clock) begin
+    if($past(valid) && !$past(dut_ready)) begin
+        assume($stable(valid));
+        assume($stable(rs1));
+        assume($stable(rs2));
+        assume($stable(enc));
+        assume($stable(rot));
+    end
+end
 
 wire        dut_sel = $anyconst;
 
@@ -94,6 +105,7 @@ xc_aessub #(
 ) i_dut_0(
 .clock (clock       ),
 .reset (reset       ),
+.flush (flush       ), // 
 .valid (valid       ), // Are the inputs valid?
 .rs1   (rs1         ), // Input source register 1
 .rs2   (rs2         ), // Input source register 2
@@ -110,6 +122,7 @@ xc_aessub #(
 ) i_dut_1(
 .clock (clock       ),
 .reset (reset       ),
+.flush (flush       ), // 
 .valid (valid       ), // Are the inputs valid?
 .rs1   (rs1         ), // Input source register 1
 .rs2   (rs2         ), // Input source register 2
