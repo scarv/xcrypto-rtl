@@ -150,30 +150,30 @@ wire [7:0] enc_byte     = enc_x3_out ^ enc_x2_out ^ enc_x1_in ^ enc_x0_in;
 //
 // Decryption
 
-wire [3:0] dec_0_rhs    = {4{fsm_0}} & 4'he |
-                          {4{fsm_1}} & 4'h9 |
-                          {4{fsm_2}} & 4'hd |
-                          {4{fsm_3}} & 4'hb ;
+wire [7:0] dec_0_lhs    = {8{fsm_0}} & d0 |
+                          {8{fsm_1}} & d1 |
+                          {8{fsm_2}} & d2 |
+                          {8{fsm_3}} & d3 ;
 
-wire [3:0] dec_1_rhs    = {4{fsm_0}} & 4'hb |
-                          {4{fsm_1}} & 4'he |
-                          {4{fsm_2}} & 4'h9 |
-                          {4{fsm_3}} & 4'hd ;
+wire [7:0] dec_1_lhs    = {8{fsm_0}} & d1 |
+                          {8{fsm_1}} & d2 |
+                          {8{fsm_2}} & d3 |
+                          {8{fsm_3}} & d0 ;
 
-wire [3:0] dec_2_rhs    = {4{fsm_0}} & 4'hd |
-                          {4{fsm_1}} & 4'hb |
-                          {4{fsm_2}} & 4'he |
-                          {4{fsm_3}} & 4'h9 ;
+wire [7:0] dec_2_lhs    = {8{fsm_0}} & d2 |
+                          {8{fsm_1}} & d3 |
+                          {8{fsm_2}} & d0 |
+                          {8{fsm_3}} & d1 ;
 
-wire [3:0] dec_3_rhs    = {4{fsm_0}} & 4'h9 |
-                          {4{fsm_1}} & 4'hd |
-                          {4{fsm_2}} & 4'hb |
-                          {4{fsm_3}} & 4'he ;
+wire [7:0] dec_3_lhs    = {8{fsm_0}} & d3 |
+                          {8{fsm_1}} & d0 |
+                          {8{fsm_2}} & d1 |
+                          {8{fsm_3}} & d2 ;
 
-wire [7:0] dec_0_out    = xtimeN(d0, dec_0_rhs);
-wire [7:0] dec_1_out    = xtimeN(d1, dec_1_rhs);
-wire [7:0] dec_2_out    = xtimeN(d2, dec_2_rhs);
-wire [7:0] dec_3_out    = xtimeN(d3, dec_3_rhs);
+wire [7:0] dec_0_out    = xtimeN(dec_0_lhs, 4'he);
+wire [7:0] dec_1_out    = xtimeN(dec_1_lhs, 4'hb);
+wire [7:0] dec_2_out    = xtimeN(dec_2_lhs, 4'hd);
+wire [7:0] dec_3_out    = xtimeN(dec_3_lhs, 4'h9);
 
 wire [7:0] dec_byte     = dec_0_out ^ dec_1_out ^ dec_2_out ^ dec_3_out;
 
