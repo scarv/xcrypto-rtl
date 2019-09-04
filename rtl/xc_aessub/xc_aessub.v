@@ -10,6 +10,7 @@ input  wire        clock ,
 input  wire        reset ,
 
 input  wire        flush , // Flush contents
+input  wire [31:0] flush_data, // Data flushed into the design.
 
 input  wire        valid , // Are the inputs valid?
 input  wire [31:0] rs1   , // Input source register 1
@@ -100,8 +101,8 @@ assign     result  = rot ? {b_2, b_1, b_0, sbox_out} :
                            {sbox_out, b_2, b_1, b_0} ;
 
 always @(posedge clock) begin
-    if(reset) begin
-        b_0 <= 0;
+    if(reset || flush) begin
+        b_0 <= flush_data;
     end else if(fsm_0 && valid) begin
         b_0 <= sbox_out;
     end
@@ -109,7 +110,7 @@ end
 
 always @(posedge clock) begin
     if(reset) begin
-        b_1 <= 0;
+        b_1 <= flush_data;
     end else if(fsm_1 && valid) begin
         b_1 <= sbox_out;
     end
@@ -117,7 +118,7 @@ end
 
 always @(posedge clock) begin
     if(reset) begin
-        b_2 <= 0;
+        b_2 <= flush_data;
     end else if(fsm_2 && valid) begin
         b_2 <= sbox_out;
     end

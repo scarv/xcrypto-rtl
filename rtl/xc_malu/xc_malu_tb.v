@@ -61,6 +61,7 @@ reg [31:0]  dut_rs1                         ; //
 reg [31:0]  dut_rs2                         ; //
 reg [31:0]  dut_rs3                         ; //
 reg         dut_flush                       ; // Flush state.
+reg [31:0]  dut_flush_data                  ; // Value to flush into any state
 reg         dut_valid     , n_dut_valid     ; // Inputs valid.
 reg         dut_uop_div   , n_dut_uop_div   ; //
 reg         dut_uop_divu  , n_dut_uop_divu  ; //
@@ -96,6 +97,8 @@ always @(posedge clock) begin
 
     dut_operation <= $unsigned($random) % 14;
     dut_pw        <= $unsigned($random) %  4;
+
+    dut_flush_data <= $random;
 
     if(!resetn) begin
         dut_rs1        <= 0;
@@ -360,6 +363,7 @@ xc_malu i_dut(
 .rs2       (dut_rs2       ), //
 .rs3       (dut_rs3       ), //
 .flush     (dut_flush     ), // Flush state / pipeline progress
+.flush_data(dut_flush_data), // Flush state / pipeline progress
 .valid     (dut_valid     ), // Inputs valid.
 .uop_div   (dut_uop_div   ), //
 .uop_divu  (dut_uop_divu  ), //

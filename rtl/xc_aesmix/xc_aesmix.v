@@ -10,6 +10,7 @@ input  wire        clock ,
 input  wire        reset ,
 
 input  wire        flush , // Flush state ready for next set of inputs.
+input  wire [31:0] flush_data, // Data flushed into the design.
 
 input  wire        valid , // Are the inputs valid?
 input  wire [31:0] rs1   , // Input source register 1
@@ -186,24 +187,24 @@ assign     result_enc       = {b_3, b_2, b_1, b_0};
 assign     result_dec       = {b_3, b_2, b_1, b_0};
 
 always @(posedge clock) begin
-    if(reset) begin
-        b_0 <= 0;
+    if(reset || flush) begin
+        b_0 <= flush_data;
     end else if(fsm_0 && valid) begin
         b_0 <= step_out;
     end
 end
 
 always @(posedge clock) begin
-    if(reset) begin
-        b_1 <= 0;
+    if(reset || flush) begin
+        b_1 <= flush_data;
     end else if(fsm_1 && valid) begin
         b_1 <= step_out;
     end
 end
 
 always @(posedge clock) begin
-    if(reset) begin
-        b_2 <= 0;
+    if(reset || flush) begin
+        b_2 <= flush_data;
     end else if(fsm_2 && valid) begin
         b_2 <= step_out;
     end

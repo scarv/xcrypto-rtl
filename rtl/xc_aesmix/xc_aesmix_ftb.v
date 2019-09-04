@@ -12,6 +12,7 @@ reg [31:0]  rs1   = $anyseq; // Input source register 1
 reg [31:0]  rs2   = $anyseq; // Input source register 2
 reg         enc   = $anyseq; // Perform encrypt (set) or decrypt (clear).
 reg         dut_sel=$anyconst;
+reg [31:0] flush_data = $anyseq;
 
 initial     assume(reset == 1'b1);
 initial     assume(valid == 1'b0);
@@ -87,6 +88,7 @@ xc_aesmix #(
 .clock (clock     ),
 .reset (reset     ),
 .flush (flush     ), //
+.flush_data(flush_data),
 .valid (valid     ), // Are the inputs valid?
 .rs1   (rs1       ), // Input source register 1
 .rs2   (rs2       ), // Input source register 2
@@ -103,6 +105,7 @@ xc_aesmix #(
 .clock (clock     ),
 .reset (reset     ),
 .flush (flush     ), //
+.flush_data(flush_data),
 .valid (valid     ), // Are the inputs valid?
 .rs1   (rs1       ), // Input source register 1
 .rs2   (rs2       ), // Input source register 2

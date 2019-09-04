@@ -22,6 +22,7 @@ input  wire [31:0]  rs2             , //
 input  wire [31:0]  rs3             , //
 
 input  wire         flush           , // Flush state / pipeline progress
+input  wire [31:0]  flush_data      , // Random / zeros data to flush into state.
 input  wire         valid           , // Inputs valid.
 
 input  wire         uop_div         , //
@@ -250,9 +251,9 @@ wire        reg_ld_en  = count_en               ||
 always @(posedge clock) begin
     if(!resetn || flush) begin
         count <= 0;
-        acc   <= 0;
-        arg_0 <= 0;
-        arg_1 <= 0;
+        acc   <= {flush_data, flush_data};
+        arg_0 <= flush_data;
+        arg_1 <= flush_data;
         carry <= 0;
     end else if(fsm_init && valid) begin
         acc   <= ld_on_init ? n_acc  : 0     ;
