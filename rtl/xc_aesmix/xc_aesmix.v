@@ -188,7 +188,7 @@ assign     result_dec       = {b_3, b_2, b_1, b_0};
 
 always @(posedge clock) begin
     if(reset || flush) begin
-        b_0 <= flush_data;
+        b_0 <= flush_data[7:0];
     end else if(fsm_0 && valid) begin
         b_0 <= step_out;
     end
@@ -196,7 +196,7 @@ end
 
 always @(posedge clock) begin
     if(reset || flush) begin
-        b_1 <= flush_data;
+        b_1 <= flush_data[15:8];
     end else if(fsm_1 && valid) begin
         b_1 <= step_out;
     end
@@ -204,7 +204,7 @@ end
 
 always @(posedge clock) begin
     if(reset || flush) begin
-        b_2 <= flush_data;
+        b_2 <= flush_data[23:16];
     end else if(fsm_2 && valid) begin
         b_2 <= step_out;
     end
